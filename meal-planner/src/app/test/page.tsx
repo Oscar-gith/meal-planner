@@ -1,3 +1,5 @@
+'use client'
+
 export default function TestPage() {
   return (
     <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
