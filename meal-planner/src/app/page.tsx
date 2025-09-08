@@ -1,6 +1,9 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
+
 export default function Home() {
+  const router = useRouter()
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       {/* Hero Section */}
@@ -22,7 +25,9 @@ export default function Home() {
           <p className="text-gray-600 mb-4">
             Crea automáticamente un plan de comidas para la semana aplicando tus reglas.
           </p>
-          <button className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors">
+          <button 
+            onClick={() => router.push('/planes')}
+            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors">
             Generar Plan
           </button>
         </div>
@@ -33,7 +38,9 @@ export default function Home() {
           <p className="text-gray-600 mb-4">
             Administra tu base de datos de alimentos por categorías y tipos.
           </p>
-          <button className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+          <button 
+            onClick={() => router.push('/alimentos')}
+            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
             Ver Alimentos
           </button>
         </div>
@@ -44,7 +51,9 @@ export default function Home() {
           <p className="text-gray-600 mb-4">
             Define reglas en lenguaje natural para personalizar tus planes.
           </p>
-          <button className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">
+          <button 
+            onClick={() => router.push('/reglas')}
+            className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">
             Editar Reglas
           </button>
         </div>
