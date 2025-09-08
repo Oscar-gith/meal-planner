@@ -18,6 +18,7 @@ export default function AlimentosPage() {
 
   async function loadFoodItems() {
     try {
+      console.log('🔍 Loading food items...')
       const { data, error } = await supabase
         .from('food_items')
         .select('*')
@@ -25,13 +26,16 @@ export default function AlimentosPage() {
         .order('subtype', { ascending: true })
         .order('name', { ascending: true })
 
+      console.log('📊 Supabase response:', { data, error, count: data?.length })
+      
       if (error) {
-        console.error('Error loading food items:', error)
+        console.error('❌ Error loading food items:', error)
       } else {
+        console.log(`✅ Loaded ${data?.length || 0} food items`)
         setFoodItems(data || [])
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('💥 Exception:', error)
     } finally {
       setLoading(false)
     }
@@ -123,6 +127,8 @@ export default function AlimentosPage() {
 
         <div className="mt-4 text-sm text-gray-600">
           Mostrando {filteredItems.length} de {foodItems.length} alimentos
+          {loading && <span className="ml-2 text-blue-600">🔄 Cargando...</span>}
+          {!loading && foodItems.length === 0 && <span className="ml-2 text-red-600">❌ No se cargaron datos</span>}
         </div>
       </div>
 
