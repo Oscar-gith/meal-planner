@@ -137,7 +137,7 @@ export default function PlanesPage() {
           </h2>
           
           <div className="grid gap-4">
-            {generatedPlan.days.map((day, index) => (
+            {generatedPlan.days.map((day) => (
               <div key={day.date} className="border rounded-lg p-4">
                 <h3 className="font-semibold text-lg text-gray-800 mb-3">
                   {day.day_name} ({new Date(day.date).toLocaleDateString('es-ES')})

@@ -11,13 +11,13 @@ export class MealPlannerEngine {
   private rules: Rule[]
   private history: { [foodId: string]: string[] } // foodId -> dates when used
 
-  constructor(foods: FoodItem[], rules: Rule[], history: any[] = []) {
+  constructor(foods: FoodItem[], rules: Rule[], history: Array<{food_item_id: string, served_date: string}> = []) {
     this.foods = foods
     this.rules = rules.filter(rule => rule.is_active)
     this.history = this.processHistory(history)
   }
 
-  private processHistory(history: any[]): { [foodId: string]: string[] } {
+  private processHistory(history: Array<{food_item_id: string, served_date: string}>): { [foodId: string]: string[] } {
     const processed: { [foodId: string]: string[] } = {}
     history.forEach(entry => {
       if (!processed[entry.food_item_id]) {
@@ -84,7 +84,7 @@ export class MealPlannerEngine {
     this.rules.forEach(rule => {
       if (rule.meal_type && rule.meal_type !== mealType) return
 
-      validFoods = this.applyRule(rule, validFoods, currentDate, previousDays, mealType)
+      validFoods = this.applyRule(rule, validFoods, currentDate, previousDays)
     })
 
     return validFoods
@@ -94,8 +94,7 @@ export class MealPlannerEngine {
     rule: Rule,
     foods: FoodItem[],
     currentDate: string,
-    previousDays: DailyMeals[],
-    mealType: string
+    previousDays: DailyMeals[]
   ): FoodItem[] {
     const ruleText = rule.rule_text.toLowerCase()
 
@@ -109,13 +108,8 @@ export class MealPlannerEngine {
 
     // Rule: "Un día a la semana avena"
     if (ruleText.includes('un día') && ruleText.includes('avena')) {
-      const weekHasAvena = previousDays.some(day => 
-        Object.values(day.meals).flat().some(meal => 
-          meal.food_item?.name.toLowerCase().includes('avena')
-        )
-      )
-      // If week already has avena, don't force it again
-      // This rule is handled in selection logic below
+      // This rule is handled in selection logic
+      // Could add avena preference logic here if needed
     }
 
     // Rule: "El huevo debe ir combinado con un carb"
