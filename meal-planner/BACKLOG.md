@@ -10,9 +10,39 @@
 - [x] Generación de planes semanales
 - [x] Deploy en Vercel con CI/CD automático
 
+## 🐛 Bugs Identificados - Sesión 1
+**Prioridad: Crítica - Arreglar primero**
+
+- [ ] **Bug calendario**: Incluye domingo aun con flag de fines de semana deshabilitado
+- [ ] **Bug regla huevos**: Repite huevos días consecutivos ignorando la regla "No huevo dos días seguidos"
+- [ ] **Motor de reglas**: Las reglas no se están aplicando correctamente en el algoritmo
+
 ## 📋 Para Próximas Sesiones
 
-### 1. CRUD de Alimentos y Reglas
+### 1. Bugs Críticos y Mejoras al Algoritmo
+**Prioridad: Crítica**
+- [ ] Arreglar lógica de fechas para respetar flag de fines de semana
+- [ ] Corregir aplicación de reglas en el motor de planificación
+- [ ] Validar que todas las reglas se aplican correctamente
+- [ ] Mejorar logging para debug del algoritmo
+
+### 2. Nuevas Reglas Inteligentes
+**Prioridad: Alta**
+- [ ] **Regla meriendas**: No repetir ningún item de onces hasta 2 días después
+- [ ] **Regla ensaladas**: No repetir ensalada hasta 2 días después  
+- [ ] **Reglas temporales**: Sistema para definir "no repetir X por Y días"
+- [ ] **Validador de reglas**: Verificar que el plan cumple todas las reglas antes de mostrarlo
+
+### 3. Mejoras UX del Planificador
+**Prioridad: Alta**
+- [ ] **Confirmación**: Preguntar antes de sobreescribir plan actual
+- [ ] **Edición individual**: Click en cualquier comida para cambiarla
+- [ ] **Regeneración parcial**: Cambiar solo desayuno/almuerzo/once de un día
+- [ ] **Sustituciones**: "Dame otra opción para esta comida"
+- [ ] **Lock items**: Marcar comidas como "no cambiar" durante regeneración
+- [ ] **Vista previa**: Mostrar cambios antes de confirmar
+
+### 4. CRUD de Alimentos y Reglas
 **Prioridad: Alta**
 - [ ] Agregar nuevos alimentos con formulario
 - [ ] Editar alimentos existentes (nombre, tipo, subtipo)
@@ -22,8 +52,8 @@
 - [ ] Activar/desactivar reglas
 - [ ] Validación de formularios
 
-### 2. Sistema de Autenticación  
-**Prioridad: Alta**
+### 5. Sistema de Autenticación  
+**Prioridad: Media**
 - [ ] Autenticación con email/password usando Supabase Auth
 - [ ] Login con Google OAuth
 - [ ] Registro de nuevos usuarios
@@ -31,7 +61,7 @@
 - [ ] Datos aislados por usuario
 - [ ] Re-habilitar RLS con políticas de seguridad por usuario
 
-### 3. LLMs y Agentes Inteligentes
+### 6. LLMs y Agentes Inteligentes
 **Prioridad: Media**
 - [ ] Integración con OpenAI/Claude API para interpretación de reglas
 - [ ] Sistema agentico para reglas complejas
@@ -40,8 +70,8 @@
 - [ ] Chat bot para consultas sobre nutrición
 - [ ] Análisis de balance nutricional
 
-### 4. Mejoras en Visualización
-**Prioridad: Media** 
+### 7. Mejoras en Visualización
+**Prioridad: Baja** 
 - [ ] Vista de tarjetas para alimentos con imágenes
 - [ ] Vista de lista compacta
 - [ ] Filtros avanzados (búsqueda por texto, tags)
@@ -49,7 +79,7 @@
 - [ ] Drag & drop para reorganizar
 - [ ] Vista calendario para planes generados
 
-### 5. Funcionalidades Adicionales
+### 8. Funcionalidades Adicionales
 **Prioridad: Baja**
 - [ ] Historial de planes generados
 - [ ] Guardado de planes favoritos
