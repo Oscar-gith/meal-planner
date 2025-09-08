@@ -78,7 +78,7 @@ export default function AlimentosPage() {
           Gestión de Alimentos
         </h1>
         <p className="text-gray-600">
-          Administra tu base de datos de alimentos organizados por tipo y subtipo.
+          Administra tu base de datos de alimentos organizados por tipo y subtipo. (RLS disabled)
         </p>
       </div>
 
