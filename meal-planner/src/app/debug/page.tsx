@@ -13,15 +13,14 @@ export default function DebugPage() {
     
     try {
       // Test 1: Basic connection
-      const { data: testData, error: testError } = await supabase
+      const { count, error: testError } = await supabase
         .from('food_items')
-        .select('count(*)')
-        .single()
+        .select('*', { count: 'exact', head: true })
       
       let output = '=== TEST RESULTS ===\n'
       output += `1. Connection: ${testError ? 'FAILED' : 'SUCCESS'}\n`
       if (testError) output += `   Error: ${testError.message}\n`
-      if (testData) output += `   Count: ${testData.count}\n`
+      if (count !== null) output += `   Count: ${count}\n`
       
       // Test 2: Simple select
       const { data: simpleData, error: simpleError } = await supabase
