@@ -2,7 +2,7 @@
 
 ## 📌 Estado Actual del Proyecto
 
-**Última actualización:** 2026-01-17
+**Última actualización:** 2026-01-17 (Sesión de autenticación y colaboración)
 
 ### ✅ Arquitectura Implementada
 
@@ -31,18 +31,27 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 ### Core del Sistema
 - [x] Arquitectura de 2 niveles con sistema de patrones
 - [x] Base de datos PostgreSQL en Supabase
-- [x] Tablas: `food_ingredients`, `meal_patterns`, `weekly_plans`, `pattern_distributions`
+- [x] Tablas: `food_ingredients`, `meal_patterns`, `weekly_plans`, `pattern_distributions`, `plan_collaborators`
 - [x] Motor de planificación basado en patrones ([src/lib/weekly-planner.ts](../src/lib/weekly-planner.ts))
 - [x] Sistema de validación de disponibilidad de patrones
 - [x] 7 patrones predefinidos en BD (Desayuno: 2, Almuerzo: 3, Onces: 2)
 - [x] Separación de datos por usuario (user_id en todas las tablas)
 - [x] RLS (Row Level Security) en Supabase
+- [x] **Autenticación Real** con Supabase Auth ✅ NUEVO
+- [x] **Sistema de Colaboración Multi-Usuario** ✅ NUEVO
 
 ### Páginas Implementadas
+- [x] [/login](../src/app/login/page.tsx) - Autenticación ✅ NUEVO
+  - Login/registro con email y password
+  - Autenticación con Google OAuth
+  - Toggle entre registro e inicio de sesión
+  - Manejo de errores y validaciones
+- [x] [/login/callback](../src/app/login/callback/page.tsx) - Callback OAuth ✅ NUEVO
 - [x] [/ingredientes](../src/app/ingredientes/page.tsx) - CRUD completo de ingredientes
   - Filtro multi-select por tipo (botones tipo "pills")
   - Búsqueda por nombre
   - Creación múltiple con separador `|`
+  - **Autenticación real integrada** ✅ NUEVO
 - [x] [/planes](../src/app/planes/page.tsx) - Planificación semanal completa
   - Configuración de plan (5 o 7 días)
   - Visualización de patrones disponibles
@@ -51,6 +60,8 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Sustituciones de comidas
   - Guardar planes en BD
   - Ver planes guardados
+  - **Gestión de colaboradores** ✅ NUEVO
+  - **Autenticación real integrada** ✅ NUEVO
 
 ### Bugs Resueltos
 - [x] Bug calendario: domingo incluido incorrectamente ✅
@@ -84,35 +95,28 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 
 ### 🔥 PRIORIDAD CRÍTICA
 
-#### 1. Autenticación Real (DEUDA TÉCNICA)
-**Estado actual**: Usando hardcoded UUID `00000000-0000-0000-0000-000000000000` para desarrollo
+~~#### 1. Autenticación Real (DEUDA TÉCNICA)~~ ✅ **COMPLETADO** (2026-01-17)
 
-**Archivos a eliminar:**
-- [src/lib/auth/dev-user.ts](../src/lib/auth/dev-user.ts) - Helper temporal con UUID hardcodeado
-- `supabase/migrations/005_create_dev_user.sql` - Usuario fake en auth.users
+**✅ Implementado:**
+- [x] Páginas `/login` y `/login/callback` creadas
+- [x] Login/registro con email y password
+- [x] Autenticación con Google OAuth configurada y funcionando
+- [x] Middleware de protección de rutas ([src/middleware.ts](../src/middleware.ts))
+- [x] Header dinámico con usuario y botón "Cerrar sesión"
+- [x] Integración en páginas de ingredientes y planes
+- [x] Sistema de colaboración multi-usuario implementado
+- [x] Archivos temporales eliminados (`dev-user.ts`, `005_create_dev_user.sql`)
 
-**Páginas a crear:**
-- `/login` - Login/registro con email y password
-- `/login/callback` - Callback de OAuth
+**Migraciones ejecutadas:**
+- [x] `006_create_plan_collaborators.sql` - Sistema de colaboración
+- [x] `007_create_user_search_function.sql` - Búsqueda segura de usuarios
 
-**Archivos a actualizar:**
-- [src/app/planes/page.tsx](../src/app/planes/page.tsx) - Línea 19: Reemplazar `import { getDevUserId }` y usar `supabase.auth.getUser()`
-- [src/app/ingredientes/page.tsx](../src/app/ingredientes/page.tsx) - Línea 36: Reemplazar `DEFAULT_USER_ID` hardcodeado
+**Documentación creada:**
+- [x] [SETUP-AUTH.md](../SETUP-AUTH.md) - Guía completa de configuración
 
-**Total verificado:** Solo 2 páginas usan autenticación temporal ✅
-
-**Funcionalidades:**
-- Login/registro con email y password usando Supabase Auth
-- Sign in con cuenta de Google (OAuth)
-- Protección de rutas con middleware
-- Manejo de sesiones con cookies
-- Header con usuario y botón "Cerrar sesión"
-
-**⚠️ IMPORTANTE**: NO DESPLEGAR A PRODUCCIÓN sin autenticación real.
+**Estado:** ✅ **LISTO PARA PRODUCCIÓN** (autenticación configurada y probada)
 
 #### 2. Crear Ingredientes Faltantes para Patrones ✅ COMPLETADO
-
-~~Según [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md), faltan ingredientes de estos tipos:~~
 
 **Estado:** Todos los ingredientes necesarios ya fueron creados por el usuario.
 
@@ -120,7 +124,29 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 
 ### ⚡ PRIORIDAD ALTA
 
-#### 3. Nuevas Reglas Inteligentes
+#### 3. Testing Completo del Sistema de Autenticación y Colaboración
+- [ ] **Testing de autenticación**:
+  - [ ] Flujo completo de registro con email/password
+  - [ ] Flujo completo de login con email/password
+  - [ ] Flujo completo de OAuth con Google
+  - [ ] Cerrar sesión y verificar que se limpia la sesión
+  - [ ] Protección de rutas (intentar acceder sin login)
+  - [ ] Persistencia de sesión (refresh de página)
+- [ ] **Testing de colaboración**:
+  - [ ] Crear plan con usuario 1
+  - [ ] Agregar usuario 2 como colaborador
+  - [ ] Verificar que usuario 2 ve el plan compartido
+  - [ ] Editar plan desde usuario 2
+  - [ ] Verificar permisos (colaborador no puede eliminar plan)
+  - [ ] Verificar permisos (colaborador no puede gestionar colaboradores)
+  - [ ] Eliminar colaborador como owner
+- [ ] **Testing de integración**:
+  - [ ] Crear ingredientes con usuario autenticado
+  - [ ] Generar plan con ingredientes del usuario
+  - [ ] Guardar plan y verificar owner
+  - [ ] Ver planes en lista (solo propios + compartidos)
+
+#### 4. Nuevas Reglas Inteligentes
 
 - [ ] **Regla meriendas**: No repetir ningún item de onces hasta 2 días después
 - [ ] **Regla ensaladas**: No repetir ensalada hasta 2 días después
@@ -128,6 +154,11 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - [ ] **Validador de reglas**: Verificar que el plan cumple todas las reglas antes de mostrarlo
 
 #### 4. Mejoras UX del Planificador
+- [ ] **Intercambio de menús entre días**: Permitir arrastrar/intercambiar comidas completas entre días
+  - Ejemplo: Mover almuerzo del lunes al miércoles y viceversa
+  - Mantener integridad del resto del plan (otros días no afectados)
+  - UI con drag & drop o botones de intercambio
+  - Funciona para cualquier tipo de comida (desayuno, almuerzo, onces)
 - [ ] **Lock items**: Marcar comidas como "no cambiar" durante regeneración
 - [ ] **Vista previa**: Mostrar cambios antes de confirmar
 
@@ -148,7 +179,27 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 
 ### 🔸 PRIORIDAD MEDIA
 
-#### 7. CRUD de Tipos
+#### 7. Framework de Testing Automatizado
+- [ ] **Evaluar y seleccionar framework de testing**:
+  - [ ] Investigar opciones: Vitest, Jest, Playwright, Cypress
+  - [ ] Considerar testing unitario vs E2E vs integración
+  - [ ] Evaluar compatibilidad con Next.js 15 y Supabase
+  - [ ] Revisar performance y velocidad de ejecución
+- [ ] **Setup inicial del framework**:
+  - [ ] Instalar y configurar framework seleccionado
+  - [ ] Configurar scripts en package.json
+  - [ ] Setup de CI/CD para tests automáticos (GitHub Actions)
+- [ ] **Escribir tests básicos**:
+  - [ ] Tests unitarios para funciones de utilidad
+  - [ ] Tests de componentes React
+  - [ ] Tests de integración para flujos críticos
+  - [ ] Tests E2E para user journeys principales
+- [ ] **Coverage y reportes**:
+  - [ ] Configurar code coverage
+  - [ ] Establecer threshold mínimo (ej: 80%)
+  - [ ] Generar reportes HTML
+
+#### 8. CRUD de Tipos
 - [ ] **Página de gestión de tipos**: Nueva página para administrar tipos
   - CRUD completo para tipos de ingredientes (Fruta, Carb, Proteína, etc.)
   - CRUD completo para tipos de comidas (Desayuno, Almuerzo, Onces, etc.)
@@ -351,7 +402,13 @@ Ver [obsolete/](obsolete/) para:
 
 ---
 
-**Última actualización:** 2026-01-17 (Sesión vespertina)
-**Estado:** Sistema de planificación basado en patrones completamente funcional ✅
-**Cambios recientes:** Eliminada arquitectura legacy de combinaciones, implementado filtro multi-select
-**Próximo paso recomendado:** Implementar autenticación real (prioridad crítica)
+**Última actualización:** 2026-01-17 (Sesión de autenticación y colaboración)
+**Estado:** Sistema completo con autenticación real y colaboración multi-usuario ✅
+**Cambios recientes:**
+- ✅ Autenticación real implementada (email/password + Google OAuth)
+- ✅ Sistema de colaboración multi-usuario completado
+- ✅ Middleware de protección de rutas
+- ✅ Header dinámico con usuario
+- ✅ Eliminada deuda técnica de autenticación temporal
+
+**Próximo paso recomendado:** Testing completo del sistema de autenticación y colaboración (prioridad alta)

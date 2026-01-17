@@ -33,7 +33,7 @@ export default function IngredientesPage() {
   }
 
   const supabase = createClient()
-  const DEFAULT_USER_ID = '00000000-0000-0000-0000-000000000000'
+  const [userId, setUserId] = useState<string | null>(null)
 
   const [ingredientTypes, setIngredientTypes] = useState<string[]>([
     'Fruta',
@@ -50,6 +50,14 @@ export default function IngredientesPage() {
   const [showCustomType, setShowCustomType] = useState(false)
 
   useEffect(() => {
+    const initUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setUserId(session.user.id)
+      }
+    }
+
+    initUser()
     loadIngredients()
   }, [])
 
@@ -126,7 +134,7 @@ export default function IngredientesPage() {
             type: finalType,
             description: formData.description,
             tags: formData.tags,
-            user_id: DEFAULT_USER_ID
+            user_id: userId
           }))
 
           const { error } = await supabase
@@ -144,7 +152,7 @@ export default function IngredientesPage() {
               type: finalType,
               description: formData.description,
               tags: formData.tags,
-              user_id: DEFAULT_USER_ID
+              user_id: userId
             })
 
           if (error) throw error

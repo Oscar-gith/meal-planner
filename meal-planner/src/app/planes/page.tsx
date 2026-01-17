@@ -16,9 +16,9 @@ import {
   getAvailablePatterns,
   countIngredientsByType
 } from '@/lib/meal-patterns'
-import { getDevUserId } from '@/lib/auth/dev-user'
 import Toast, { ToastType } from '@/components/Toast'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import CollaboratorsManager from '@/components/CollaboratorsManager'
 
 interface SavedPlan {
   id: string
@@ -26,6 +26,15 @@ interface SavedPlan {
   start_date: string
   end_date: string
   created_at: string
+  user_id: string
+}
+
+interface PlanCollaborator {
+  id: string
+  plan_id: string
+  user_id: string
+  role: 'owner' | 'collaborator'
+  user_email?: string
 }
 
 interface MealEditorProps {
@@ -139,6 +148,7 @@ export default function PlanesPage() {
   const [loading, setLoading] = useState(true)
   const [generatedPlan, setGeneratedPlan] = useState<PlanningResult | null>(null)
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
 
   // Data from database
   const [ingredients, setIngredients] = useState<FoodIngredient[]>([])
@@ -149,6 +159,9 @@ export default function PlanesPage() {
 
   // Edit mode
   const [editingMeal, setEditingMeal] = useState<{date: string, mealType: string} | null>(null)
+
+  // Collaborators management
+  const [managingCollaborators, setManagingCollaborators] = useState<{ planId: string; isOwner: boolean } | null>(null)
 
   // Toast notifications
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
@@ -177,6 +190,14 @@ export default function PlanesPage() {
   const supabase = createClient()
 
   useEffect(() => {
+    const initUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setUserId(session.user.id)
+      }
+    }
+
+    initUser()
     loadData()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -186,7 +207,7 @@ export default function PlanesPage() {
       const [ingredientsResult, patternsResult, plansResult] = await Promise.all([
         supabase.from('food_ingredients').select('*'),
         supabase.from('meal_patterns').select('*').eq('is_system', true).order('display_order'),
-        supabase.from('weekly_plans').select('id, name, start_date, end_date, created_at').order('created_at', { ascending: false }).limit(10)
+        supabase.from('weekly_plans').select('id, name, start_date, end_date, created_at, user_id').order('created_at', { ascending: false }).limit(10)
       ])
 
       if (ingredientsResult.data) {
@@ -283,12 +304,9 @@ export default function PlanesPage() {
   }
 
   const handleSavePlan = async () => {
-    if (!generatedPlan) return
+    if (!generatedPlan || !userId) return
 
     try {
-      // TEMPORARY: Using dev user ID until proper authentication is implemented
-      // TODO: Replace with real Supabase Auth (see BACKLOG.md)
-      const userId = getDevUserId()
 
       // Check if there's already a plan for this date range
       const { data: existingPlans, error: checkError } = await supabase
@@ -948,6 +966,13 @@ export default function PlanesPage() {
                       👁️ Ver
                     </button>
                     <button
+                      onClick={() => setManagingCollaborators({ planId: plan.id, isOwner: plan.user_id === userId })}
+                      className="bg-indigo-600 text-white py-2 px-3 rounded-md hover:bg-indigo-700 font-medium text-sm"
+                      title="Gestionar colaboradores"
+                    >
+                      👥 Colaborar
+                    </button>
+                    <button
                       onClick={() => handleDeletePlan(plan.id, plan.name)}
                       className="bg-red-600 text-white py-2 px-3 rounded-md hover:bg-red-700 font-medium text-sm"
                       title="Eliminar plan"
@@ -961,6 +986,16 @@ export default function PlanesPage() {
           </div>
         )}
       </div>
+
+      {/* Collaborators Manager Modal */}
+      {managingCollaborators && userId && (
+        <CollaboratorsManager
+          planId={managingCollaborators.planId}
+          currentUserId={userId}
+          isOwner={managingCollaborators.isOwner}
+          onClose={() => setManagingCollaborators(null)}
+        />
+      )}
 
       {/* Toast notifications */}
       {toast && (

@@ -2,9 +2,12 @@
 
 ## Estado del Proyecto
 
-**Fecha**: 2026-01-17 (Sesión vespertina - Actualizado según código real)
-**Fase Actual**: Sistema de planificación basado en patrones completamente funcional ✅
-**Cambios recientes**: Eliminada arquitectura legacy de combinaciones, implementado filtro multi-select
+**Fecha**: 2026-01-17 (Sesión de autenticación y colaboración - Actualizado según código real)
+**Fase Actual**: Sistema completo con autenticación real y colaboración multi-usuario ✅
+**Cambios recientes**:
+- Implementada autenticación real con Supabase Auth (email/password + Google OAuth)
+- Sistema de colaboración multi-usuario completado
+- Eliminada deuda técnica de autenticación temporal
 
 ---
 
@@ -75,16 +78,30 @@ Campos:
 - percentage - % de uso del patrón
 ```
 
+#### 5. `plan_collaborators` (nueva) ✅ NUEVO
+```sql
+Campos:
+- id, plan_id, user_id, role ('owner' | 'collaborator')
+- invited_by, invited_at, created_at
+
+Relaciones:
+- plan_id → weekly_plans.id (CASCADE delete)
+- user_id → auth.users.id (CASCADE delete)
+- invited_by → auth.users.id
+
+Unique constraint: (plan_id, user_id)
+```
+
 ### Scripts SQL Ejecutados:
 1. ✅ `001_update_ingredient_types.sql` - Actualización de tipos de ingredientes
 2. ✅ `002_create_meal_patterns.sql` - Tabla de patrones + 7 patrones del sistema
 3. ✅ `003_create_weekly_plans.sql` - Tablas de planes y distribuciones
 4. ✅ `004_remove_completo_onces_pattern.sql` - Limpieza de patrones obsoletos
-5. ✅ `005_create_dev_user.sql` - Usuario de desarrollo temporal (DEUDA TÉCNICA)
+5. ~~❌ `005_create_dev_user.sql`~~ - ELIMINADO (deuda técnica resuelta)
+6. ✅ `006_create_plan_collaborators.sql` - Sistema de colaboración ✅ NUEVO
+7. ✅ `007_create_user_search_function.sql` - Búsqueda segura de usuarios ✅ NUEVO
 
 **Ubicación:** [supabase/migrations/](../supabase/migrations/)
-
-**Nota:** El script 005 crea un usuario fake para desarrollo. Ver [BACKLOG.md](BACKLOG.md) - Prioridad CRÍTICA: reemplazar con autenticación real.
 
 ---
 
@@ -279,6 +296,15 @@ Pero solo Patrón 1 está disponible:
 - Dialog de confirmación antes de sobrescribir plan actual
 - Evita pérdida accidental de trabajo
 
+**9. Gestión de Colaboradores** ✅ NUEVO
+- Botón "👥 Colaborar" en cada plan guardado
+- Modal para gestionar colaboradores
+- Buscar usuarios por email
+- Agregar colaboradores (solo owners)
+- Eliminar colaboradores (solo owners)
+- Indicadores visuales de rol (owner/collaborator)
+- Permisos diferenciados por rol
+
 ### Características Técnicas
 
 - Usa `WeeklyPlanningEngine` para generación
@@ -287,9 +313,10 @@ Pero solo Patrón 1 está disponible:
 - Guarda planes en `weekly_plans` table (JSONB)
 - Validación completa de disponibilidad de patrones
 - Manejo de errores robusto
-- Componentes: Toast, ConfirmDialog
+- Componentes: Toast, ConfirmDialog, CollaboratorsManager
 - Responsive design (mobile-friendly)
-- Usa `getDevUserId()` para autenticación temporal ⚠️
+- **Autenticación real con Supabase Auth** ✅ NUEVO
+- **Sistema de colaboración multi-usuario** ✅ NUEVO
 
 ---
 
@@ -300,6 +327,7 @@ Pero solo Patrón 1 está disponible:
 - [BACKLOG.md](./BACKLOG.md) - Tareas pendientes organizadas por prioridad
 - [MEAL-PATTERNS-FINAL.md](./MEAL-PATTERNS-FINAL.md) - Definición completa de patrones
 - [IMPLEMENTATION-SUMMARY.md](./IMPLEMENTATION-SUMMARY.md) - Este archivo
+- [SETUP-AUTH.md](../SETUP-AUTH.md) - Guía de configuración de autenticación ✅ NUEVO
 
 ### Documentación Obsoleta
 Ver: [obsolete/](./obsolete/)
@@ -314,20 +342,33 @@ Ver: [obsolete/](./obsolete/)
 - `002_create_meal_patterns.sql` - Tabla + 7 patrones del sistema
 - `003_create_weekly_plans.sql` - Tablas weekly_plans y pattern_distributions
 - `004_remove_completo_onces_pattern.sql` - Limpieza
-- `005_create_dev_user.sql` - Usuario temporal (⚠️ DEUDA TÉCNICA)
+- ~~`005_create_dev_user.sql`~~ - ELIMINADO (deuda técnica resuelta)
+- `006_create_plan_collaborators.sql` - Sistema de colaboración ✅ NUEVO
+- `007_create_user_search_function.sql` - Búsqueda de usuarios ✅ NUEVO
 
 ### Código Core
 - [src/lib/meal-patterns.ts](../src/lib/meal-patterns.ts) - Sistema de patrones (280 líneas)
 - [src/lib/weekly-planner.ts](../src/lib/weekly-planner.ts) - Motor de planificación (484 líneas)
-- [src/lib/auth/dev-user.ts](../src/lib/auth/dev-user.ts) - Helper temporal (⚠️ ELIMINAR)
+- [src/middleware.ts](../src/middleware.ts) - Protección de rutas ✅ NUEVO
+
+### Componentes
+- [src/components/Header.tsx](../src/components/Header.tsx) - Header dinámico con usuario ✅ NUEVO
+- [src/components/Toast.tsx](../src/components/Toast.tsx) - Notificaciones
+- [src/components/ConfirmDialog.tsx](../src/components/ConfirmDialog.tsx) - Diálogos de confirmación
+- [src/components/CollaboratorsManager.tsx](../src/components/CollaboratorsManager.tsx) - Gestión de colaboradores ✅ NUEVO
 
 ### Páginas Implementadas
+- [src/app/login/page.tsx](../src/app/login/page.tsx) - Autenticación ✅ NUEVO
+- [src/app/login/callback/page.tsx](../src/app/login/callback/page.tsx) - Callback OAuth ✅ NUEVO
 - [src/app/ingredientes/page.tsx](../src/app/ingredientes/page.tsx) - CRUD completo ✅
-  - **Nuevo**: Filtro multi-select por tipo con botones tipo "pills"
+  - Filtro multi-select por tipo con botones tipo "pills"
   - Búsqueda por nombre
   - Creación múltiple con separador `|`
+  - **Autenticación real integrada** ✅ NUEVO
 - [src/app/planes/page.tsx](../src/app/planes/page.tsx) - Planificación semanal ✅
-- ~~[src/app/combinaciones/page.tsx](../src/app/combinaciones/page.tsx)~~ - **ELIMINADO** ❌
+  - **Gestión de colaboradores integrada** ✅ NUEVO
+  - **Autenticación real integrada** ✅ NUEVO
+- ~~[src/app/combinaciones/page.tsx]~~ - ELIMINADO ❌
 - [src/app/platos/page.tsx](../src/app/platos/page.tsx) - Existe pero NO se usa
 
 ### Otras Páginas
@@ -442,28 +483,36 @@ El usuario proporcionó:
 Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
 
 ### 🔥 Crítico
-1. **Reemplazar autenticación temporal** con Supabase Auth real
-2. ~~**Crear ingredientes faltantes** para habilitar todos los patrones~~ ✅ **COMPLETADO**
+~~1. **Reemplazar autenticación temporal** con Supabase Auth real~~ ✅ **COMPLETADO**
 
 ### ⚡ Alta Prioridad
-3. **Nuevas reglas inteligentes** (no repetir onces/ensaladas por X días)
-4. **Mejoras UX planificador** (lock items, vista previa)
-5. **CRUD de reglas** desde UI
-6. **Modularización del código** (refactoring)
+1. **Testing completo** del sistema de autenticación y colaboración
+2. **Nuevas reglas inteligentes** (no repetir onces/ensaladas por X días)
+3. **Mejoras UX planificador** (lock items, vista previa, intercambio de menús)
+4. **CRUD de reglas** desde UI
+5. **Modularización del código** (refactoring)
 
 ### 🔸 Media Prioridad
+6. **Framework de testing automatizado** (Vitest, Playwright, etc.)
 7. **CRUD de tipos** desde UI (no hardcodeados)
 8. **Orden alfabético automático** en dropdowns
 9. **Integración con LLMs** (interpretación de reglas, sugerencias)
 
 ---
 
-**Última actualización**: 2026-01-17 (Sesión vespertina)
-**Estado**: Sistema de planificación basado en patrones completamente funcional ✅
-**Cambios de hoy**: Arquitectura legacy eliminada, filtro multi-select implementado
+**Última actualización**: 2026-01-17 (Sesión de autenticación y colaboración)
+**Estado**: Sistema completo con autenticación real y colaboración multi-usuario ✅
+**Cambios de hoy**:
+- ✅ Autenticación real implementada (email/password + Google OAuth)
+- ✅ Sistema de colaboración multi-usuario completado
+- ✅ Middleware de protección de rutas
+- ✅ Header dinámico con usuario
+- ✅ Eliminada deuda técnica de autenticación temporal
 
 **Verificado contra código real**: Sí ✅
 - Motor de planificación: [src/lib/weekly-planner.ts](../src/lib/weekly-planner.ts)
 - Sistema de patrones: [src/lib/meal-patterns.ts](../src/lib/meal-patterns.ts)
 - Página de planes: [src/app/planes/page.tsx](../src/app/planes/page.tsx)
+- Autenticación: [src/app/login/page.tsx](../src/app/login/page.tsx), [src/middleware.ts](../src/middleware.ts)
+- Colaboración: [src/components/CollaboratorsManager.tsx](../src/components/CollaboratorsManager.tsx)
 - Migraciones SQL: [supabase/migrations/](../supabase/migrations/)
