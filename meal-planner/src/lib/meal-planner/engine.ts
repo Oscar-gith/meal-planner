@@ -33,11 +33,22 @@ export class MealPlannerEngine {
     const days: DailyMeals[] = []
 
     // Generate days based on preferences
-    for (let i = 0; i < preferences.days; i++) {
+    let daysGenerated = 0
+    let dayOffset = 0
+    
+    while (daysGenerated < preferences.days) {
       const currentDate = new Date(startDate)
-      currentDate.setDate(startDate.getDate() + i)
+      currentDate.setDate(startDate.getDate() + dayOffset)
       
-      const dayName = this.getDayName(currentDate.getDay())
+      const dayOfWeek = currentDate.getDay() // 0 = Sunday, 6 = Saturday
+      
+      // Skip weekends if not included
+      if (!preferences.includeWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
+        dayOffset++
+        continue
+      }
+      
+      const dayName = this.getDayName(dayOfWeek)
       const dateString = currentDate.toISOString().split('T')[0]
 
       const dailyMeals: DailyMeals = {
@@ -51,6 +62,8 @@ export class MealPlannerEngine {
       }
 
       days.push(dailyMeals)
+      daysGenerated++
+      dayOffset++
     }
 
     return {
@@ -60,16 +73,31 @@ export class MealPlannerEngine {
     }
   }
 
-  private planMeal(mealType: string, date: string, previousDays: DailyMeals[]) {
+  private planMeal(mealType: string, date: string, previousDays: DailyMeals[], currentDayMeals?: any) {
     const availableFoods = this.foods.filter(food => food.meal_type === mealType)
-    const validOptions = this.filterByRules(availableFoods, mealType, date, previousDays)
+    
+    // Apply egg rule specifically for breakfast
+    let validOptions = availableFoods
+    if (mealType === 'Desayuno') {
+      // Check if previous day had eggs in any meal
+      const previousDay = this.getPreviousDay(previousDays)
+      if (previousDay && this.dayHadEggs(previousDay)) {
+        validOptions = availableFoods.filter(food => 
+          !food.name.toLowerCase().includes('huevo') && 
+          food.subtype !== 'Huevos'
+        )
+      }
+    }
+    
+    // Apply other rules
+    validOptions = this.filterByRules(validOptions, mealType, date, previousDays)
     
     if (validOptions.length === 0) {
       // Fallback: return any available food if no options pass rules
       return this.selectRandomFoods(availableFoods, 1, mealType)
     }
 
-    return this.selectRandomFoods(validOptions, this.getMealSize(mealType), mealType)
+    return this.selectRandomFoods(validOptions, this.getMealSize(mealType), mealType, previousDays)
   }
 
   private filterByRules(
@@ -100,8 +128,10 @@ export class MealPlannerEngine {
 
     // Rule: "No se debe incluir huevo dos días seguidos"
     if (ruleText.includes('no') && ruleText.includes('huevo') && ruleText.includes('dos días seguidos')) {
-      const yesterday = this.getYesterday(currentDate, previousDays)
-      if (yesterday && this.dayHadEggs(yesterday)) {
+      // Check if previous day (in the plan) had eggs
+      const previousDay = this.getPreviousDay(previousDays)
+      
+      if (previousDay && this.dayHadEggs(previousDay)) {
         return foods.filter(food => !food.name.toLowerCase().includes('huevo'))
       }
     }
@@ -121,7 +151,7 @@ export class MealPlannerEngine {
     return foods
   }
 
-  private selectRandomFoods(foods: FoodItem[], count: number, mealType: string) {
+  private selectRandomFoods(foods: FoodItem[], count: number, mealType: string, previousDays: DailyMeals[] = []) {
     if (foods.length === 0) return []
 
     // Apply intelligent selection based on meal type
@@ -132,7 +162,7 @@ export class MealPlannerEngine {
     } else if (mealType === 'Almuerzo') {
       selectedFoods = this.selectLunch(foods, count)
     } else if (mealType === 'Onces') {
-      selectedFoods = this.selectSnack(foods, count)
+      selectedFoods = this.selectSnack(foods, count, previousDays)
     } else {
       // Random selection fallback
       const shuffled = [...foods].sort(() => 0.5 - Math.random())
@@ -151,17 +181,28 @@ export class MealPlannerEngine {
     const carbFoods = foods.filter(f => f.subtype === 'Carb')
     const completeFoods = foods.filter(f => f.subtype === 'Completo')
 
-    // Prefer complete meals, or egg + carb combination
+    // Rule: No more than one carbohydrate per breakfast
+    const selected: FoodItem[] = []
+    
+    // Prefer complete meals (they are balanced)
     if (completeFoods.length > 0 && Math.random() > 0.5) {
       return this.randomSelect(completeFoods, 1)
-    } else if (eggFoods.length > 0 && carbFoods.length > 0) {
-      return [
-        ...this.randomSelect(eggFoods, 1),
-        ...this.randomSelect(carbFoods, 1)
-      ].slice(0, count)
-    } else {
-      return this.randomSelect(foods, count)
+    } 
+    // Egg + single carb combination
+    else if (eggFoods.length > 0 && carbFoods.length > 0) {
+      selected.push(...this.randomSelect(eggFoods, 1))
+      selected.push(...this.randomSelect(carbFoods, 1)) // Only 1 carb
+    } 
+    // If only carbs available, limit to 1
+    else if (carbFoods.length > 0) {
+      selected.push(...this.randomSelect(carbFoods, 1)) // Only 1 carb
+    } 
+    // Fallback
+    else {
+      return this.randomSelect(foods, Math.min(count, 1))
     }
+
+    return selected.slice(0, count)
   }
 
   private selectLunch(foods: FoodItem[], count: number) {
@@ -197,17 +238,41 @@ export class MealPlannerEngine {
     return selected.slice(0, Math.max(count, 2)) // At least 2 items for lunch
   }
 
-  private selectSnack(foods: FoodItem[], count: number) {
-    // Rule: drink + carb + fruit
+  private selectSnack(foods: FoodItem[], count: number, previousDays: DailyMeals[] = []) {
     const drinkFoods = foods.filter(f => f.subtype === 'Beber')
-    const carbFoods = foods.filter(f => f.subtype === 'Carb')
+    const carbFoods = foods.filter(f => f.subtype === 'Carb') 
     const fruitFoods = foods.filter(f => f.subtype === 'Fruta')
+    const proteinFoods = foods.filter(f => f.subtype === 'Proteina')
 
     const selected: FoodItem[] = []
 
-    if (drinkFoods.length > 0) selected.push(...this.randomSelect(drinkFoods, 1))
-    if (carbFoods.length > 0) selected.push(...this.randomSelect(carbFoods, 1))
-    if (fruitFoods.length > 0) selected.push(...this.randomSelect(fruitFoods, 1))
+    // Check if hummus was selected
+    const hummusFood = proteinFoods.find(f => f.name.toLowerCase().includes('hummus'))
+    const cheeseFood = proteinFoods.find(f => f.name.toLowerCase().includes('queso'))
+    
+    // Special rule: Hummus + chips only goes with fruit
+    if (hummusFood && Math.random() > 0.7) { // 30% chance for hummus
+      selected.push(hummusFood)
+      if (fruitFoods.length > 0) selected.push(...this.randomSelect(fruitFoods, 1))
+      return selected
+    }
+    
+    // Special rule: Cheese + carb maximum 1 day per week
+    const weekHadCheese = this.weekHadCheeseCarb(previousDays)
+    if (cheeseFood && !weekHadCheese && Math.random() > 0.8) { // 20% chance for cheese
+      selected.push(cheeseFood)
+      if (carbFoods.length > 0) selected.push(...this.randomSelect(carbFoods, 1))
+      return selected
+    }
+
+    // Regular rule: drink + carb + fruit (avoiding 2-day repetition)
+    const filteredDrinks = this.filterRecentlyUsed(drinkFoods, previousDays, 'Onces', 2)
+    const filteredCarbs = this.filterRecentlyUsed(carbFoods, previousDays, 'Onces', 2)
+    const filteredFruits = this.filterRecentlyUsed(fruitFoods, previousDays, 'Onces', 2)
+
+    if (filteredDrinks.length > 0) selected.push(...this.randomSelect(filteredDrinks, 1))
+    if (filteredCarbs.length > 0) selected.push(...this.randomSelect(filteredCarbs, 1))
+    if (filteredFruits.length > 0) selected.push(...this.randomSelect(filteredFruits, 1))
 
     return selected.length > 0 ? selected : this.randomSelect(foods, count)
   }
@@ -231,6 +296,11 @@ export class MealPlannerEngine {
     return days[dayNumber]
   }
 
+  private getPreviousDay(previousDays: DailyMeals[]): DailyMeals | null {
+    // Simply return the last day in the plan (most recently added)
+    return previousDays.length > 0 ? previousDays[previousDays.length - 1] : null
+  }
+
   private getYesterday(currentDate: string, previousDays: DailyMeals[]): DailyMeals | null {
     const current = new Date(currentDate)
     const yesterday = new Date(current)
@@ -242,7 +312,34 @@ export class MealPlannerEngine {
 
   private dayHadEggs(day: DailyMeals): boolean {
     return Object.values(day.meals).flat().some(meal => 
-      meal.food_item?.name.toLowerCase().includes('huevo')
+      meal.food_item?.name.toLowerCase().includes('huevo') ||
+      meal.food_item?.subtype === 'Huevos'
     )
+  }
+
+  private weekHadCheeseCarb(previousDays: DailyMeals[]): boolean {
+    return previousDays.some(day => 
+      day.meals.Onces?.some(meal => 
+        meal.food_item?.name.toLowerCase().includes('queso')
+      )
+    )
+  }
+
+  private filterRecentlyUsed(foods: FoodItem[], previousDays: DailyMeals[], mealType: string, dayGap: number): FoodItem[] {
+    if (previousDays.length < dayGap) return foods
+
+    const recentlyUsed = new Set<string>()
+    
+    // Get foods used in the last 'dayGap' days for this meal type
+    previousDays.slice(-dayGap).forEach(day => {
+      const meals = day.meals[mealType as keyof typeof day.meals]
+      if (meals) {
+        meals.forEach(meal => {
+          recentlyUsed.add(meal.food_item.name)
+        })
+      }
+    })
+
+    return foods.filter(food => !recentlyUsed.has(food.name))
   }
 }

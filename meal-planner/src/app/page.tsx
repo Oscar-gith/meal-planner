@@ -18,43 +18,30 @@ export default function Home() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-4xl mx-auto">
+        <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          <div className="text-3xl mb-4">🥗</div>
+          <h3 className="text-lg font-semibold mb-2">Gestionar Ingredientes</h3>
+          <p className="text-gray-600 mb-4">
+            Crea tu biblioteca de ingredientes individuales como frutas, carbohidratos y bebidas.
+          </p>
+          <button
+            onClick={() => router.push('/ingredientes')}
+            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+            Ver Ingredientes
+          </button>
+        </div>
+
         <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
           <div className="text-3xl mb-4">🗓️</div>
-          <h3 className="text-lg font-semibold mb-2">Generar Plan Semanal</h3>
+          <h3 className="text-lg font-semibold mb-2">Planificar Semana</h3>
           <p className="text-gray-600 mb-4">
-            Crea automáticamente un plan de comidas para la semana aplicando tus reglas.
+            Genera planes semanales automáticamente basados en patrones de comida predefinidos.
           </p>
-          <button 
+          <button
             onClick={() => router.push('/planes')}
             className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors">
             Generar Plan
-          </button>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-          <div className="text-3xl mb-4">🥘</div>
-          <h3 className="text-lg font-semibold mb-2">Gestionar Alimentos</h3>
-          <p className="text-gray-600 mb-4">
-            Administra tu base de datos de alimentos por categorías y tipos.
-          </p>
-          <button 
-            onClick={() => router.push('/alimentos')}
-            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
-            Ver Alimentos
-          </button>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-          <div className="text-3xl mb-4">📋</div>
-          <h3 className="text-lg font-semibold mb-2">Configurar Reglas</h3>
-          <p className="text-gray-600 mb-4">
-            Define reglas en lenguaje natural para personalizar tus planes.
-          </p>
-          <button 
-            onClick={() => router.push('/reglas')}
-            className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">
-            Editar Reglas
           </button>
         </div>
       </div>

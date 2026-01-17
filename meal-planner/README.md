@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Meal Planner
 
-## Getting Started
+Sistema de planificación de comidas con arquitectura modular de tres niveles: Ingredientes → Combinaciones → Planes Semanales.
 
-First, run the development server:
+## Características Actuales
 
+- ✅ CRUD de ingredientes individuales con tipos personalizables
+- ✅ Creación masiva de ingredientes (separados por `|`)
+- ✅ CRUD de combinaciones/menús con validación inteligente
+- ✅ Alertas de duplicación de tipos (ej: múltiples carbohidratos)
+- ✅ Filtrado avanzado por tipo y búsqueda de texto
+- ✅ Nombres automáticos para combinaciones
+- ✅ Sistema de notificaciones moderno (toast)
+- ✅ Interfaz responsive con Tailwind CSS
+
+## Stack Tecnológico
+
+- **Frontend**: Next.js 15 + React 19 + TypeScript
+- **Styling**: Tailwind CSS 4
+- **Base de Datos**: PostgreSQL (Supabase)
+- **Auth**: Supabase Auth (próximamente)
+- **Icons**: Lucide React
+
+## Empezar
+
+1. Instalar dependencias:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Configurar variables de entorno en `.env.local`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=tu_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_key
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Ejecutar servidor de desarrollo:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Abrir [http://localhost:3000](http://localhost:3000)
 
-## Learn More
+## Estructura del Proyecto
 
-To learn more about Next.js, take a look at the following resources:
+```
+/src
+  /app              # Páginas de Next.js App Router
+    /ingredientes   # CRUD de ingredientes
+    /combinaciones  # CRUD de menús/combinaciones
+  /components       # Componentes reutilizables
+    Toast.tsx
+    ConfirmDialog.tsx
+  /lib              # Lógica de negocio y utilidades
+    /supabase       # Cliente de Supabase
+    /meal-planner   # Motor de planificación
+  /types            # Definiciones de TypeScript
+/docs               # Documentación del proyecto
+  BACKLOG.md        # Tareas pendientes y roadmap
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Documentación
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Toda la documentación técnica se encuentra en la carpeta [/docs](./docs/):
 
-## Deploy on Vercel
+- [BACKLOG.md](./docs/BACKLOG.md) - Tareas futuras y roadmap
+- [MIGRATION_GUIDE.md](./docs/MIGRATION_GUIDE.md) - Guía de migración de datos
+- Otros archivos históricos de desarrollo
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Próximas Características
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Ver [docs/BACKLOG.md](./docs/BACKLOG.md) para la lista completa. Prioridades:
+
+- 🔜 Sistema de autenticación multi-usuario
+- 🔜 Login con Google OAuth
+- 🔜 Página de gestión de tipos (ingredientes y comidas)
+- 🔜 Motor de planificación semanal rediseñado
+- 🔜 Modularización de código
+
+## Deploy
+
+El proyecto está configurado para deploy en [Vercel](https://vercel.com):
+
+```bash
+vercel deploy
+```
+
+Consulta la [documentación de Next.js deployment](https://nextjs.org/docs/app/building-your-application/deploying).

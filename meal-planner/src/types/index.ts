@@ -1,5 +1,61 @@
 // Core types for the meal planner application
 
+// ============================================
+// LEVEL 1: Ingredients (atomic)
+// ============================================
+
+export type IngredientType = string
+
+export interface FoodIngredient {
+  id: string
+  name: string
+  type: IngredientType  // 'Proteína', 'Carb', 'Ensalada', 'Fruta', etc.
+  description?: string
+  tags: string[]
+  user_id: string
+  created_at?: string
+}
+
+// ============================================
+// LEVEL 2: Dishes (composed of ingredients)
+// ============================================
+
+export type DishPattern = 'simple' | 'compound' | 'complete'
+
+export interface FoodDish {
+  id: string
+  name: string
+  dish_pattern: DishPattern
+  ingredient_ids: string[]
+  description?: string
+  tags: string[]
+  user_id: string
+  created_at?: string
+}
+
+// ============================================
+// LEVEL 3: Menus (composed of dishes)
+// ============================================
+
+export type MealType = string  // 'Desayuno', 'Almuerzo', 'Onces', etc.
+export type MenuTemplate = 'protein-carb-salad' | 'main-salad' | 'complete' | 'flexible'
+
+export interface MealMenu {
+  id: string
+  name?: string  // Optional, can be auto-generated
+  meal_type: MealType
+  dish_ids: string[]
+  meal_template: MenuTemplate
+  notes?: string
+  is_favorite: boolean
+  user_id: string
+  created_at?: string
+}
+
+// ============================================
+// Legacy types (deprecated - will be removed)
+// ============================================
+
 export interface FoodItem {
   id: string
   meal_type: string  // 'Desayuno', 'Almuerzo', 'Onces', etc.

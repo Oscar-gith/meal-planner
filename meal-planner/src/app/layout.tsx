@@ -29,11 +29,8 @@ export default function RootLayout({
                     </Link>
                   </div>
                   <nav className="hidden md:flex space-x-8">
-                    <Link href="/alimentos" className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                      Alimentos
-                    </Link>
-                    <Link href="/reglas" className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                      Reglas
+                    <Link href="/ingredientes" className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+                      Ingredientes
                     </Link>
                     <Link href="/planes" className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
                       Planes
