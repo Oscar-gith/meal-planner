@@ -2,12 +2,14 @@
 
 ## Estado del Proyecto
 
-**Fecha**: 2026-01-17 (Sesión de autenticación y colaboración - Actualizado según código real)
-**Fase Actual**: Sistema completo con autenticación real y colaboración multi-usuario ✅
+**Fecha**: 2026-01-18 (Sesión de testing - Actualizado según código real)
+**Fase Actual**: Sistema completo con autenticación real, colaboración multi-usuario, y testing framework ✅
 **Cambios recientes**:
-- Implementada autenticación real con Supabase Auth (email/password + Google OAuth)
-- Sistema de colaboración multi-usuario completado
-- Eliminada deuda técnica de autenticación temporal
+- Implementado framework de testing completo (Vitest + Playwright)
+- 14 component tests para LoginPage (✅ passing)
+- 11 E2E tests de autenticación (✅ passing)
+- Proyecto de testing Supabase separado configurado
+- **BLOQUEADO**: Test de data isolation por bug crítico de RLS
 
 ---
 
@@ -98,8 +100,11 @@ Unique constraint: (plan_id, user_id)
 3. ✅ `003_create_weekly_plans.sql` - Tablas de planes y distribuciones
 4. ✅ `004_remove_completo_onces_pattern.sql` - Limpieza de patrones obsoletos
 5. ~~❌ `005_create_dev_user.sql`~~ - ELIMINADO (deuda técnica resuelta)
-6. ✅ `006_create_plan_collaborators.sql` - Sistema de colaboración ✅ NUEVO
-7. ✅ `007_create_user_search_function.sql` - Búsqueda segura de usuarios ✅ NUEVO
+6. ✅ `006_create_plan_collaborators.sql` - Sistema de colaboración
+7. ✅ `007_create_user_search_function.sql` - Búsqueda segura de usuarios
+8. ❌ `008_fix_rls_recursion.sql` - FALLIDO: Intento de fix RLS infinite recursion
+9. ❌ `009_diagnose_policies.sql` - Queries de diagnóstico (no es migración)
+10. ❌ `010_final_rls_fix.sql` - FALLIDO: Otro intento de fix RLS
 
 **Ubicación:** [supabase/migrations/](../supabase/migrations/)
 
@@ -214,6 +219,113 @@ Unique constraint: (plan_id, user_id)
 **Helpers públicos:**
 - `createDefaultConfig()` - Crea configuración con distribuciones default
 - `validatePlanningPrerequisites()` - Valida que se puede generar un plan
+
+---
+
+## Infraestructura de Testing
+
+### ✅ Framework de Testing Completo (2026-01-18)
+
+**Tecnologías Implementadas:**
+- **Vitest 2.1.0** - Framework de testing unitario y de componentes
+- **Playwright 1.51.1** - Framework de testing E2E
+- **React Testing Library 16.1.0** - Utilities para testing de componentes React
+- **dotenv-cli 11.0.0** - Gestión de variables de entorno para testing
+- **jsdom** - Simulación de DOM para component tests
+
+**Entorno de Testing:**
+- Proyecto Supabase separado para testing (no contamina producción)
+- Variables de entorno en `tests/.env.test`
+- Script `dev:test` que carga ambiente de testing
+- 2 usuarios de test programáticos con contraseñas consistentes
+
+### Archivos de Configuración
+
+📁 [playwright.config.ts](../playwright.config.ts)
+- Configuración de Playwright para E2E tests
+- Usa `dev:test` script para cargar variables de test
+- Ejecución secuencial (workers: 1) para multi-user tests
+- Screenshots y videos en caso de fallo
+
+📁 [vitest.config.ts](../vitest.config.ts)
+- Configuración de Vitest para component tests
+- CSS deshabilitado (fix para PostCSS/Tailwind v4)
+- Aliases para lodash ESM compatibility
+- Setup file: `tests/setup.ts`
+
+📁 [tests/setup.ts](../tests/setup.ts)
+- Custom matchers: `toBeInTheDocument`, `toBeDisabled`
+- Reemplazo de @testing-library/jest-dom (evita ESM issues)
+- Mock de Next.js router
+- Auto-cleanup después de cada test
+
+📁 [tests/vitest.d.ts](../tests/vitest.d.ts)
+- Definiciones de tipos para custom matchers
+
+### Tests Implementados
+
+#### Component Tests ✅ 14/14 PASSING
+📁 [tests/component/LoginPage.test.tsx](../tests/component/LoginPage.test.tsx)
+- Render inicial con todos los elementos del form
+- Login exitoso
+- Login con errores
+- Estados de loading
+- Toggle entre login/signup
+- Google OAuth button
+- Validación de formulario
+
+#### E2E Authentication Tests ✅ 11/11 PASSING
+📁 [tests/e2e/auth/login.spec.ts](../tests/e2e/auth/login.spec.ts)
+- Display de página de login
+- Login exitoso con redirección
+- Login fallido con credenciales inválidas
+- Validación de formulario
+- Logout con limpieza de sesión
+- Persistencia de sesión (refresh page)
+- Redirección a login en rutas protegidas
+- Login secuencial de múltiples usuarios
+
+#### E2E Data Isolation Test ❌ BLOCKED
+📁 [tests/e2e/auth/data-isolation.spec.ts](../tests/e2e/auth/data-isolation.spec.ts)
+- Test para validar RLS policies
+- **BLOQUEADO** por bug crítico de infinite recursion en RLS
+- Ver sección "Deuda Técnica Crítica" abajo
+
+### Utilities de Testing
+
+📁 [tests/utils/supabase-mock.ts](../tests/utils/supabase-mock.ts)
+- Mock client de Supabase para component tests
+- Simula respuestas de auth y database
+
+📁 [tests/scripts/create-test-users.ts](../tests/scripts/create-test-users.ts)
+- Script para crear usuarios de test programáticamente
+- Usa SUPABASE_SERVICE_ROLE_KEY
+- Asegura contraseñas consistentes con `.env.test`
+
+### Comandos de Testing
+
+```bash
+npm run test                 # Vitest component tests
+npm run test:e2e            # Playwright E2E tests
+npm run dev:test            # Next.js dev server con ambiente de test
+```
+
+### Cobertura de Testing
+
+**Phase 1: Setup** ✅ COMPLETADO
+- Framework installation y configuración
+- Ambiente de testing separado
+- Utilities y helpers
+
+**Phase 2: Authentication** ⚠️ PARCIALMENTE COMPLETADO
+- ✅ Component tests (14/14 passing)
+- ✅ E2E auth tests (11/11 passing)
+- ❌ Data isolation test (blocked por RLS bug)
+
+**Phase 3: Collaboration** ⏳ PENDIENTE
+- Bloqueado hasta resolver RLS bug
+- Tests de colaboración multi-usuario
+- Validación de permisos
 
 ---
 
@@ -421,13 +533,27 @@ Ver: [obsolete/](./obsolete/)
 ### 5. Multi-usuario y Seguridad
 - ✅ Todas las tablas tienen RLS (Row Level Security) policies
 - ✅ Sistema preparado para multi-usuario (columna `user_id` en todas las tablas)
-- ⚠️ **DEUDA TÉCNICA CRÍTICA**: Autenticación temporal con UUID hardcodeado
-  - Archivo temporal: [src/lib/auth/dev-user.ts](../src/lib/auth/dev-user.ts)
-  - Usuario fake en: `supabase/migrations/005_create_dev_user.sql`
-  - **NO DESPLEGAR A PRODUCCIÓN** sin reemplazar con autenticación real
-  - Ver [BACKLOG.md](./BACKLOG.md) - Prioridad CRÍTICA
+- ✅ **Autenticación real implementada** (2026-01-17)
+  - Supabase Auth con email/password + Google OAuth
+  - Middleware de protección de rutas
+  - Sistema de colaboración multi-usuario
+  - ~~Deuda técnica de autenticación temporal~~ **ELIMINADA**
 
-### 6. Bugs Conocidos
+### 6. Bugs Conocidos y Deuda Técnica Crítica
+
+**🔥 CRÍTICO - BLOQUEA TESTING DE COLABORACIÓN:**
+- **RLS Infinite Recursion en plan_collaborators** (descubierto 2026-01-18)
+  - Error: "infinite recursion detected in policy for relation plan_collaborators"
+  - Causa raíz: Trigger `create_plan_owner_collaborator` + RLS INSERT policy circular
+  - Estado: 8+ intentos de fix fallidos
+  - Impacto: Test de data isolation no puede pasar, bloquea Fase 3 de testing
+  - Archivos afectados:
+    - [supabase/migrations/006_create_plan_collaborators.sql](../supabase/migrations/006_create_plan_collaborators.sql)
+    - [supabase/migrations/008_fix_rls_recursion.sql](../supabase/migrations/008_fix_rls_recursion.sql) - FALLIDO
+    - [supabase/migrations/010_final_rls_fix.sql](../supabase/migrations/010_final_rls_fix.sql) - FALLIDO
+  - **Acción requerida**: Re-pensar estrategia de RLS desde cero (ver BACKLOG.md para opciones)
+
+**Alta Prioridad:**
 - Motor de reglas: Las reglas no se están aplicando correctamente
 - Ver sección "🐛 Bugs Pendientes" en [BACKLOG.md](./BACKLOG.md)
 
@@ -483,31 +609,40 @@ El usuario proporcionó:
 Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
 
 ### 🔥 Crítico
-~~1. **Reemplazar autenticación temporal** con Supabase Auth real~~ ✅ **COMPLETADO**
+1. **Resolver bug de RLS infinite recursion** - BLOQUEA testing de colaboración (2026-01-18)
+   - Re-pensar estrategia de RLS desde cero
+   - Ver opciones detalladas en BACKLOG.md
 
 ### ⚡ Alta Prioridad
-1. **Testing completo** del sistema de autenticación y colaboración
+1. ~~**Testing completo** del sistema de autenticación y colaboración~~ ⚠️ **PARCIALMENTE COMPLETADO**
+   - ✅ Framework de testing instalado (Vitest + Playwright)
+   - ✅ Component tests (14/14 passing)
+   - ✅ E2E auth tests (11/11 passing)
+   - ❌ Data isolation test (bloqueado por RLS bug)
+   - ❌ Collaboration tests (bloqueado por RLS bug)
 2. **Nuevas reglas inteligentes** (no repetir onces/ensaladas por X días)
 3. **Mejoras UX planificador** (lock items, vista previa, intercambio de menús)
 4. **CRUD de reglas** desde UI
 5. **Modularización del código** (refactoring)
 
 ### 🔸 Media Prioridad
-6. **Framework de testing automatizado** (Vitest, Playwright, etc.)
-7. **CRUD de tipos** desde UI (no hardcodeados)
-8. **Orden alfabético automático** en dropdowns
-9. **Integración con LLMs** (interpretación de reglas, sugerencias)
+6. **CRUD de tipos** desde UI (no hardcodeados)
+7. **Orden alfabético automático** en dropdowns
+8. **Integración con LLMs** (interpretación de reglas, sugerencias)
 
 ---
 
-**Última actualización**: 2026-01-17 (Sesión de autenticación y colaboración)
-**Estado**: Sistema completo con autenticación real y colaboración multi-usuario ✅
+**Última actualización**: 2026-01-18 (Sesión de testing - Fase 1 y 2 completadas)
+**Estado**: Sistema completo con autenticación, colaboración, y testing framework implementado ✅
 **Cambios de hoy**:
-- ✅ Autenticación real implementada (email/password + Google OAuth)
-- ✅ Sistema de colaboración multi-usuario completado
-- ✅ Middleware de protección de rutas
-- ✅ Header dinámico con usuario
-- ✅ Eliminada deuda técnica de autenticación temporal
+- ✅ Framework de testing completo (Vitest 2.1.0 + Playwright 1.51.1)
+- ✅ Proyecto Supabase separado para testing
+- ✅ Component tests: LoginPage (14/14 passing)
+- ✅ E2E tests de autenticación (11/11 passing)
+- ✅ Script de creación de usuarios de testing
+- ✅ Custom matchers para Vitest (reemplazo de jest-dom)
+- ❌ Bug crítico descubierto: RLS infinite recursion en plan_collaborators
+- ⚠️ Fase 3 de testing bloqueada hasta resolver bug de RLS
 
 **Verificado contra código real**: Sí ✅
 - Motor de planificación: [src/lib/weekly-planner.ts](../src/lib/weekly-planner.ts)
@@ -515,4 +650,6 @@ Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
 - Página de planes: [src/app/planes/page.tsx](../src/app/planes/page.tsx)
 - Autenticación: [src/app/login/page.tsx](../src/app/login/page.tsx), [src/middleware.ts](../src/middleware.ts)
 - Colaboración: [src/components/CollaboratorsManager.tsx](../src/components/CollaboratorsManager.tsx)
+- Testing: [tests/component/](../tests/component/), [tests/e2e/](../tests/e2e/)
+- Configuración: [vitest.config.ts](../vitest.config.ts), [playwright.config.ts](../playwright.config.ts)
 - Migraciones SQL: [supabase/migrations/](../supabase/migrations/)

@@ -84,10 +84,23 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 
 ## 🐛 Bugs Pendientes
 
+**Prioridad: CRÍTICA** 🔥
+- [ ] **RLS Infinite Recursion en plan_collaborators**: BLOQUEA testing de colaboración
+  - Error: "infinite recursion detected in policy for relation plan_collaborators"
+  - Causa: Trigger `create_plan_owner_collaborator` + RLS INSERT policy circular
+  - Estado: 8+ intentos de fix sin éxito
+  - Impacto: Test de data isolation no puede pasar
+  - Archivos afectados:
+    - `supabase/migrations/006_create_plan_collaborators.sql` (trigger original)
+    - `supabase/migrations/008_fix_rls_recursion.sql` (intentos de fix)
+    - `supabase/migrations/010_final_rls_fix.sql` (más intentos)
+  - **Acción requerida**: Re-pensar estrategia de RLS desde cero
+
 **Prioridad: Alta**
 - [ ] **Motor de reglas**: Las reglas no se están aplicando correctamente en el algoritmo
 - [ ] Validar que todas las reglas se aplican correctamente
 - [ ] Mejorar logging para debug del algoritmo
+- [ ] Cuando me logueo con un usuario nuevo puedo ver los ingredientes anteriores que creamos. Al consultar en la base de datos veo que todos los ingredientes estan bajo el usuario 00000000-0000-0000-0000-000000000000, No se estan separando los datos por usuario como debe ser.
 
 ---
 
@@ -125,13 +138,58 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 ### ⚡ PRIORIDAD ALTA
 
 #### 3. Testing Completo del Sistema de Autenticación y Colaboración
-- [ ] **Testing de autenticación**:
-  - [ ] Flujo completo de registro con email/password
-  - [ ] Flujo completo de login con email/password
-  - [ ] Flujo completo de OAuth con Google
-  - [ ] Cerrar sesión y verificar que se limpia la sesión
-  - [ ] Protección de rutas (intentar acceder sin login)
-  - [ ] Persistencia de sesión (refresh de página)
+
+**✅ FASE 1 - Testing Setup (COMPLETADO 2026-01-18)**
+- [x] Crear proyecto de Supabase para testing
+- [x] Instalar framework de testing (Vitest + Playwright)
+- [x] Configurar archivos de testing (`vitest.config.ts`, `playwright.config.ts`)
+- [x] Crear utilities de testing (supabase-mock, auth-helpers)
+- [x] Actualizar package.json y .gitignore
+- [x] Crear script `dev:test` con dotenv-cli
+- [x] Crear usuarios de testing programáticamente
+
+**Archivos creados:**
+- `playwright.config.ts` - Config Playwright
+- `vitest.config.ts` - Config Vitest
+- `tests/setup.ts` - Setup global + custom matchers
+- `tests/utils/supabase-mock.ts` - Mock de Supabase
+- `tests/scripts/create-test-users.ts` - Script de usuarios
+
+**✅ FASE 2 - Testing de Autenticación (COMPLETADO 2026-01-18)**
+- [x] **Component tests**:
+  - [x] LoginPage component test (14/14 tests passing) ✅
+  - [x] Render inicial y elementos del formulario
+  - [x] Login con email/password (success, error, loading)
+  - [x] Registro de usuario (toggle, submission, confirmation)
+  - [x] Google OAuth iniciación
+  - [x] Validación de formularios
+- [x] **E2E tests de autenticación** (11/11 tests passing) ✅:
+  - [x] Display correcto de login page
+  - [x] Login exitoso con credenciales válidas
+  - [x] Error con credenciales inválidas
+  - [x] Error con usuario no existente
+  - [x] Validación de campos requeridos
+  - [x] Toggle entre login/signup
+  - [x] Logout exitoso
+  - [x] Persistencia de sesión (page reload)
+  - [x] Persistencia de sesión (new tab)
+  - [x] Redirect a login sin autenticación
+  - [x] Login secuencial de múltiples usuarios
+
+**Archivos creados:**
+- `tests/component/LoginPage.test.tsx` - Component tests ✅
+- `tests/e2e/auth/login.spec.ts` - E2E auth tests ✅
+
+**❌ FASE 2 - Data Isolation Test (BLOQUEADO por bug RLS)**
+- [x] Test creado pero no pasa ❌
+- [ ] **BUG CRÍTICO**: Infinite recursion en RLS policies
+  - Archivo: `tests/e2e/auth/data-isolation.spec.ts`
+  - Error: "infinite recursion detected in policy for relation plan_collaborators"
+  - Causa: Trigger `create_plan_owner_collaborator` + RLS policies circulares
+  - Intentos de fix: 8+ iteraciones sin éxito
+  - **DECISIÓN**: Pausar y re-pensar estrategia de RLS
+
+**🚫 FASE 3 - Testing de Colaboración (BLOQUEADA - depende de fix RLS)**
 - [ ] **Testing de colaboración**:
   - [ ] Crear plan con usuario 1
   - [ ] Agregar usuario 2 como colaborador
@@ -145,6 +203,17 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - [ ] Generar plan con ingredientes del usuario
   - [ ] Guardar plan y verificar owner
   - [ ] Ver planes en lista (solo propios + compartidos)
+
+**📋 NUEVA TAREA CRÍTICA**: Re-diseñar estrategia de RLS para plan_collaborators
+- [ ] Analizar arquitectura actual de RLS y triggers
+- [ ] Evaluar opciones:
+  - [ ] Opción 1: Deshabilitar RLS en plan_collaborators (confiar en RLS de weekly_plans)
+  - [ ] Opción 2: Usar funciones SECURITY DEFINER correctamente
+  - [ ] Opción 3: Rediseñar trigger para evitar recursión
+  - [ ] Opción 4: Cambiar arquitectura de colaboradores (usar JSONB en weekly_plans)
+- [ ] Implementar solución elegida
+- [ ] Validar con test de data isolation
+- [ ] Continuar con Fase 3 de testing
 
 #### 4. Nuevas Reglas Inteligentes
 
@@ -402,13 +471,16 @@ Ver [obsolete/](obsolete/) para:
 
 ---
 
-**Última actualización:** 2026-01-17 (Sesión de autenticación y colaboración)
-**Estado:** Sistema completo con autenticación real y colaboración multi-usuario ✅
-**Cambios recientes:**
-- ✅ Autenticación real implementada (email/password + Google OAuth)
-- ✅ Sistema de colaboración multi-usuario completado
-- ✅ Middleware de protección de rutas
-- ✅ Header dinámico con usuario
-- ✅ Eliminada deuda técnica de autenticación temporal
+**Última actualización:** 2026-01-18 (Sesión de testing - Fase 1 y 2 completadas, Fase 3 bloqueada)
+**Estado:** Testing setup completo, auth tests passing, RLS bug crítico bloqueando colaboración tests
+**Cambios de hoy:**
+- ✅ Framework de testing instalado y configurado (Vitest + Playwright)
+- ✅ Component tests de LoginPage (14/14 passing)
+- ✅ E2E tests de autenticación (11/11 passing)
+- ✅ Script de creación de usuarios de testing
+- ✅ Proyecto de Supabase separado para testing
+- ❌ Bug crítico de RLS encontrado (infinite recursion en plan_collaborators)
 
-**Próximo paso recomendado:** Testing completo del sistema de autenticación y colaboración (prioridad alta)
+**Próximo paso recomendado:**
+1. **CRÍTICO**: Resolver bug de RLS infinite recursion (re-pensar estrategia desde cero)
+2. Una vez resuelto: Continuar con Fase 3 de testing (colaboración)
