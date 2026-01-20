@@ -62,8 +62,8 @@ function LoginForm() {
 
         router.push('/planes')
       }
-    } catch (err: any) {
-      setError(err.message || 'Error al autenticar. Intenta de nuevo.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al autenticar. Intenta de nuevo.')
       setLoading(false)
     }
   }
@@ -81,8 +81,8 @@ function LoginForm() {
       })
 
       if (error) throw error
-    } catch (err: any) {
-      setError(err.message || 'Error al conectar con Google.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al conectar con Google.')
       setLoading(false)
     }
   }

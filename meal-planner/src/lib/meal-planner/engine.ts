@@ -73,7 +73,7 @@ export class MealPlannerEngine {
     }
   }
 
-  private planMeal(mealType: string, date: string, previousDays: DailyMeals[], currentDayMeals?: any) {
+  private planMeal(mealType: string, date: string, previousDays: DailyMeals[]) {
     const availableFoods = this.foods.filter(food => food.meal_type === mealType)
     
     // Apply egg rule specifically for breakfast

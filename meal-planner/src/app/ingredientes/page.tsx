@@ -171,9 +171,9 @@ export default function IngredientesPage() {
       setCustomType('')
       resetForm()
       loadIngredients()
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving ingredient:', error)
-      showToast(error.message || 'Error al guardar ingrediente', 'error')
+      showToast(error instanceof Error ? error.message : 'Error al guardar ingrediente', 'error')
     }
   }
 
@@ -194,9 +194,9 @@ export default function IngredientesPage() {
       showToast('Ingrediente eliminado')
       setDeleteConfirm(null)
       loadIngredients()
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting ingredient:', error)
-      showToast(error.message || 'Error al eliminar ingrediente', 'error')
+      showToast(error instanceof Error ? error.message : 'Error al eliminar ingrediente', 'error')
       setDeleteConfirm(null)
     }
   }

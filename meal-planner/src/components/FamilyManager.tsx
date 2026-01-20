@@ -30,7 +30,6 @@ export default function FamilyManager({ onClose, isModal = false }: FamilyManage
     error: familyError,
     members,
     loadingMembers,
-    refresh,
     createFamily,
     joinFamily,
     leaveFamily,
@@ -74,8 +73,8 @@ export default function FamilyManager({ onClose, isModal = false }: FamilyManage
       setSuccess('Familia creada exitosamente')
       setNewFamilyName('')
       setMode('view')
-    } catch (err: any) {
-      setError(err.message || 'Error al crear la familia')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al crear la familia')
     } finally {
       setProcessing(false)
     }
@@ -95,15 +94,16 @@ export default function FamilyManager({ onClose, isModal = false }: FamilyManage
       setSuccess(`Te has unido a la familia "${result.family_name}"`)
       setJoinCode('')
       setMode('view')
-    } catch (err: any) {
-      if (err.message.includes('Invalid invite code')) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : ''
+      if (message.includes('Invalid invite code')) {
         setError('Codigo de invitacion invalido')
-      } else if (err.message.includes('maximum members')) {
+      } else if (message.includes('maximum members')) {
         setError('La familia ha alcanzado el limite de 6 miembros')
-      } else if (err.message.includes('already in a family')) {
+      } else if (message.includes('already in a family')) {
         setError('Ya perteneces a una familia')
       } else {
-        setError(err.message || 'Error al unirse a la familia')
+        setError(message || 'Error al unirse a la familia')
       }
     } finally {
       setProcessing(false)
@@ -122,11 +122,12 @@ export default function FamilyManager({ onClose, isModal = false }: FamilyManage
         setSuccess('Has salido de la familia')
       }
       setShowLeaveConfirm(false)
-    } catch (err: any) {
-      if (err.message.includes('only admin')) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : ''
+      if (message.includes('only admin')) {
         setError('No puedes salir siendo el unico admin. Transfiere el rol primero.')
       } else {
-        setError(err.message || 'Error al salir de la familia')
+        setError(message || 'Error al salir de la familia')
       }
     } finally {
       setProcessing(false)
@@ -140,8 +141,8 @@ export default function FamilyManager({ onClose, isModal = false }: FamilyManage
     try {
       await regenerateInviteCode()
       setSuccess('Codigo de invitacion regenerado')
-    } catch (err: any) {
-      setError(err.message || 'Error al regenerar el codigo')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al regenerar el codigo')
     } finally {
       setProcessing(false)
     }
@@ -167,8 +168,8 @@ export default function FamilyManager({ onClose, isModal = false }: FamilyManage
       await removeMember(userId)
       setSuccess('Miembro eliminado')
       setMemberToRemove(null)
-    } catch (err: any) {
-      setError(err.message || 'Error al eliminar miembro')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al eliminar miembro')
     } finally {
       setProcessing(false)
     }
@@ -182,8 +183,8 @@ export default function FamilyManager({ onClose, isModal = false }: FamilyManage
       await transferAdmin(userId)
       setSuccess('Rol de admin transferido')
       setMemberToPromote(null)
-    } catch (err: any) {
-      setError(err.message || 'Error al transferir rol')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al transferir rol')
     } finally {
       setProcessing(false)
     }

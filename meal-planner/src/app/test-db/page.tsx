@@ -3,8 +3,23 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+interface TestResult {
+  success: boolean
+  error?: {
+    message: string
+    details: string
+    hint: string
+    code: string
+  } | null
+  data?: unknown
+  envURL?: string
+  envKeyPreview?: string
+  exception?: string
+  stack?: string
+}
+
 export default function TestDBPage() {
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<TestResult | null>(null)
   const [loading, setLoading] = useState(false)
 
   const supabase = createClient()
@@ -38,12 +53,12 @@ export default function TestDBPage() {
       })
 
       console.log('Result:', { data, error })
-    } catch (err: any) {
+    } catch (err) {
       console.error('Exception:', err)
       setResult({
         success: false,
-        exception: err.message,
-        stack: err.stack
+        exception: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined
       })
     } finally {
       setLoading(false)
@@ -106,7 +121,7 @@ export default function TestDBPage() {
               </div>
             )}
 
-            {result.data && (
+            {result.data !== undefined && (
               <div>
                 <h3 className="font-semibold text-sm text-green-700">Data:</h3>
                 <pre className="bg-green-50 p-3 rounded text-xs overflow-auto">

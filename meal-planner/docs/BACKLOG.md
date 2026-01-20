@@ -231,11 +231,40 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Estructura clara de carpetas y responsabilidades
 - [x] **Consolidación de documentación**: Todos los .md ya están en `/docs` ✅
 
+#### 7. Separación de Ambientes (Dev/Prod/Test) 🔧 NUEVO
+**Motivación:** Actualmente dev y prod usan la misma base de datos. Riesgo de modificar datos de producción accidentalmente.
+
+**Tareas:**
+- [ ] **Crear proyecto Supabase separado para desarrollo**
+  - Nuevo proyecto en Supabase dashboard
+  - Copiar schema y migraciones
+  - Seed data de desarrollo
+- [ ] **Configurar variables de entorno por ambiente**
+  - `.env.local` → desarrollo local
+  - `.env.production` → producción (Vercel)
+  - `.env.test` → testing automatizado
+- [ ] **Documentar proceso de migraciones**
+  - Cómo aplicar migraciones en cada ambiente
+  - Orden de despliegue (test → dev → prod)
+- [ ] **Scripts de setup por ambiente**
+  - `npm run dev` → usa BD de desarrollo
+  - `npm run dev:prod` → conecta a prod (solo lectura, para debug)
+  - `npm run test` → usa BD de testing
+- [ ] **Protección de producción**
+  - Considerar read-only mode para conexiones de dev
+  - Alertas si se detecta modificación desde ambiente incorrecto
+
+**Beneficios:**
+- ✅ Desarrollo seguro sin riesgo a prod
+- ✅ Testing aislado con datos controlados
+- ✅ Facilita onboarding de nuevos devs
+- ✅ Permite experimentar sin consecuencias
+
 ---
 
 ### 🔸 PRIORIDAD MEDIA
 
-#### 7. Framework de Testing Automatizado
+#### 8. Framework de Testing Automatizado
 - [ ] **Evaluar y seleccionar framework de testing**:
   - [ ] Investigar opciones: Vitest, Jest, Playwright, Cypress
   - [ ] Considerar testing unitario vs E2E vs integración
@@ -255,19 +284,19 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - [ ] Establecer threshold mínimo (ej: 80%)
   - [ ] Generar reportes HTML
 
-#### 8. CRUD de Tipos
+#### 9. CRUD de Tipos
 - [ ] **Página de gestión de tipos**: Nueva página para administrar tipos
   - CRUD completo para tipos de ingredientes (Fruta, Carb, Proteína, etc.)
   - CRUD completo para tipos de comidas (Desayuno, Almuerzo, Onces, etc.)
   - Los tipos deben ser editables desde UI, no hardcodeados
 
-#### 8. Mejoras UX Generales
+#### 10. Mejoras UX Generales
 - [x] **Filtro multi-select de ingredientes**: Implementado con botones tipo "pills" ✅
 - [ ] **Orden alfabético automático**: Tipos de alimento ordenados alfabéticamente
   - Aplicar en dropdowns y vistas de listado
   - Auto-reordenar al crear tipo nuevo
 
-#### 9. Motor de Reglas con LLM (NUEVA PROPUESTA) 🤖
+#### 11. Motor de Reglas con LLM (NUEVA PROPUESTA) 🤖
 **Motivación:** El motor de reglas fijas es complejo y poco flexible. Propuesta de arquitectura con LLM.
 
 **Funcionalidades:**
@@ -294,7 +323,7 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 4. Repetir hasta cumplir todas las reglas (max 3-5 iteraciones)
 5. Mostrar plan final + explicación de ajustes
 
-#### 10. LLMs y Agentes Inteligentes (Otras Funcionalidades)
+#### 12. LLMs y Agentes Inteligentes (Otras Funcionalidades)
 - [ ] Generación de descripciones automáticas de platos
 - [ ] Sugerencias inteligentes basadas en historial
 - [ ] Chat bot para consultas sobre nutrición
@@ -304,7 +333,7 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 
 ### 🔹 PRIORIDAD BAJA
 
-#### 11. Scheduling Automático de Planes 📅
+#### 13. Scheduling Automático de Planes 📅
 **Objetivo:** Generar planes automáticamente en schedule configurado
 
 **Funcionalidades:**
@@ -321,7 +350,7 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - Alternativa: GitHub Actions con schedule
 - Notificaciones: Supabase Edge Functions + email service
 
-#### 12. Mejoras en Visualización
+#### 14. Mejoras en Visualización
 - [ ] Vista de tarjetas para alimentos con imágenes
 - [ ] Vista de lista compacta
 - [ ] Filtros avanzados (búsqueda por texto, tags)
@@ -329,7 +358,7 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - [ ] Drag & drop para reorganizar
 - [ ] Vista calendario para planes generados
 
-#### 13. Analytics y Reportes 📊
+#### 15. Analytics y Reportes 📊
 **Objetivo:** Insights sobre consumo y preferencias del usuario
 
 **Funcionalidades:**

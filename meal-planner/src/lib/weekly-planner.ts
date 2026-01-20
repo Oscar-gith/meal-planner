@@ -3,9 +3,7 @@
 
 import {
   MealPattern,
-  MealPatternComponent,
   PatternDistribution,
-  checkPatternAvailability,
   getAvailablePatterns,
   countIngredientsByType,
   calculatePatternOccurrences,

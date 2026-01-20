@@ -21,10 +21,12 @@ export default defineConfig({
         '**/*.d.ts',
         'src/types/'
       ],
-      statements: 70,
-      branches: 70,
-      functions: 70,
-      lines: 70
+      thresholds: {
+        statements: 70,
+        branches: 70,
+        functions: 70,
+        lines: 70
+      }
     }
   },
   resolve: {
