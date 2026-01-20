@@ -2,7 +2,7 @@
 
 ## 📌 Estado Actual del Proyecto
 
-**Última actualización:** 2026-01-17 (Sesión de autenticación y colaboración)
+**Última actualización:** 2026-01-19 (Sistema de Familia implementado)
 
 ### ✅ Arquitectura Implementada
 
@@ -38,7 +38,7 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - [x] Separación de datos por usuario (user_id en todas las tablas)
 - [x] RLS (Row Level Security) en Supabase
 - [x] **Autenticación Real** con Supabase Auth ✅ NUEVO
-- [x] **Sistema de Colaboración Multi-Usuario** ✅ NUEVO
+- [x] **Sistema de Familia** (reemplaza colaboración) ✅ NUEVO (2026-01-19)
 
 ### Páginas Implementadas
 - [x] [/login](../src/app/login/page.tsx) - Autenticación ✅ NUEVO
@@ -46,7 +46,12 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Autenticación con Google OAuth
   - Toggle entre registro e inicio de sesión
   - Manejo de errores y validaciones
-- [x] [/login/callback](../src/app/login/callback/page.tsx) - Callback OAuth ✅ NUEVO
+- [x] [/login/callback](../src/app/login/callback/route.ts) - Callback OAuth (server route) ✅ ACTUALIZADO
+- [x] [/familia](../src/app/familia/page.tsx) - Gestión de familia ✅ NUEVO (2026-01-19)
+  - Crear familia e invitar hasta 5 miembros
+  - Unirse con código de invitación
+  - Ver miembros, roles (admin/member)
+  - Ingredientes y planes compartidos automáticamente
 - [x] [/ingredientes](../src/app/ingredientes/page.tsx) - CRUD completo de ingredientes
   - Filtro multi-select por tipo (botones tipo "pills")
   - Búsqueda por nombre
@@ -60,8 +65,8 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Sustituciones de comidas
   - Guardar planes en BD
   - Ver planes guardados
-  - **Gestión de colaboradores** ✅ NUEVO
-  - **Autenticación real integrada** ✅ NUEVO
+  - **Planes compartidos con familia** ✅ ACTUALIZADO (2026-01-19)
+  - **Autenticación real integrada** ✅
 
 ### Bugs Resueltos
 - [x] Bug calendario: domingo incluido incorrectamente ✅
@@ -85,22 +90,15 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 ## 🐛 Bugs Pendientes
 
 **Prioridad: CRÍTICA** 🔥
-- [ ] **RLS Infinite Recursion en plan_collaborators**: BLOQUEA testing de colaboración
-  - Error: "infinite recursion detected in policy for relation plan_collaborators"
-  - Causa: Trigger `create_plan_owner_collaborator` + RLS INSERT policy circular
-  - Estado: 8+ intentos de fix sin éxito
-  - Impacto: Test de data isolation no puede pasar
-  - Archivos afectados:
-    - `supabase/migrations/006_create_plan_collaborators.sql` (trigger original)
-    - `supabase/migrations/008_fix_rls_recursion.sql` (intentos de fix)
-    - `supabase/migrations/010_final_rls_fix.sql` (más intentos)
-  - **Acción requerida**: Re-pensar estrategia de RLS desde cero
+- [x] ~~**RLS Infinite Recursion en plan_collaborators**~~ ✅ **RESUELTO (2026-01-19)**
+  - Solución: Reemplazado sistema de `plan_collaborators` por nuevo sistema de "Familia"
+  - Ver sección "Sistema de Familia" abajo
 
 **Prioridad: Alta**
 - [ ] **Motor de reglas**: Las reglas no se están aplicando correctamente en el algoritmo
 - [ ] Validar que todas las reglas se aplican correctamente
 - [ ] Mejorar logging para debug del algoritmo
-- [ ] Cuando me logueo con un usuario nuevo puedo ver los ingredientes anteriores que creamos. Al consultar en la base de datos veo que todos los ingredientes estan bajo el usuario 00000000-0000-0000-0000-000000000000, No se estan separando los datos por usuario como debe ser.
+- [x] ~~Datos huérfanos con user_id incorrecto~~ ✅ **RESUELTO** - Migración 012
 
 ---
 
@@ -189,31 +187,20 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Intentos de fix: 8+ iteraciones sin éxito
   - **DECISIÓN**: Pausar y re-pensar estrategia de RLS
 
-**🚫 FASE 3 - Testing de Colaboración (BLOQUEADA - depende de fix RLS)**
-- [ ] **Testing de colaboración**:
-  - [ ] Crear plan con usuario 1
-  - [ ] Agregar usuario 2 como colaborador
-  - [ ] Verificar que usuario 2 ve el plan compartido
-  - [ ] Editar plan desde usuario 2
-  - [ ] Verificar permisos (colaborador no puede eliminar plan)
-  - [ ] Verificar permisos (colaborador no puede gestionar colaboradores)
-  - [ ] Eliminar colaborador como owner
+**✅ FASE 3 - Testing de Familia (DESBLOQUEADA - nuevo sistema implementado)**
+- [ ] **Testing de familia**:
+  - [ ] Crear familia con usuario 1
+  - [ ] Unirse a familia con usuario 2 usando código
+  - [ ] Verificar que usuario 2 ve ingredientes de la familia
+  - [ ] Verificar que usuario 2 ve planes de la familia
+  - [ ] Crear ingrediente desde usuario 2, verificar visible para usuario 1
+  - [ ] Crear plan desde usuario 2, verificar visible para usuario 1
+  - [ ] Salir de familia y verificar aislamiento de datos
 - [ ] **Testing de integración**:
   - [ ] Crear ingredientes con usuario autenticado
   - [ ] Generar plan con ingredientes del usuario
   - [ ] Guardar plan y verificar owner
-  - [ ] Ver planes en lista (solo propios + compartidos)
-
-**📋 NUEVA TAREA CRÍTICA**: Re-diseñar estrategia de RLS para plan_collaborators
-- [ ] Analizar arquitectura actual de RLS y triggers
-- [ ] Evaluar opciones:
-  - [ ] Opción 1: Deshabilitar RLS en plan_collaborators (confiar en RLS de weekly_plans)
-  - [ ] Opción 2: Usar funciones SECURITY DEFINER correctamente
-  - [ ] Opción 3: Rediseñar trigger para evitar recursión
-  - [ ] Opción 4: Cambiar arquitectura de colaboradores (usar JSONB en weekly_plans)
-- [ ] Implementar solución elegida
-- [ ] Validar con test de data isolation
-- [ ] Continuar con Fase 3 de testing
+  - [ ] Ver planes en lista (solo propios + familia)
 
 #### 4. Nuevas Reglas Inteligentes
 
@@ -471,16 +458,21 @@ Ver [obsolete/](obsolete/) para:
 
 ---
 
-**Última actualización:** 2026-01-18 (Sesión de testing - Fase 1 y 2 completadas, Fase 3 bloqueada)
-**Estado:** Testing setup completo, auth tests passing, RLS bug crítico bloqueando colaboración tests
+**Última actualización:** 2026-01-19 (Sistema de Familia implementado)
+**Estado:** Sistema de familia completo, reemplaza plan_collaborators, bug RLS resuelto
 **Cambios de hoy:**
-- ✅ Framework de testing instalado y configurado (Vitest + Playwright)
-- ✅ Component tests de LoginPage (14/14 passing)
-- ✅ E2E tests de autenticación (11/11 passing)
-- ✅ Script de creación de usuarios de testing
-- ✅ Proyecto de Supabase separado para testing
-- ❌ Bug crítico de RLS encontrado (infinite recursion en plan_collaborators)
+- ✅ Sistema de Familia implementado (estilo Duolingo Family)
+- ✅ Nuevas tablas: `families`, `family_members`, `user_profiles`
+- ✅ Funciones RPC: create_family, join_family, leave_family, get_family_members, etc.
+- ✅ Políticas RLS sin recursión (función helper `get_current_user_family_id`)
+- ✅ Nueva página `/familia` con FamilyManager component
+- ✅ Ingredientes y planes compartidos automáticamente en familia
+- ✅ OAuth callback mejorado (server route en vez de client component)
+- ✅ Header muestra nombre de usuario en vez de email
+- ✅ Bug RLS infinite recursion **RESUELTO**
+- ❌ Eliminado: CollaboratorsManager (reemplazado por FamilyManager)
 
 **Próximo paso recomendado:**
-1. **CRÍTICO**: Resolver bug de RLS infinite recursion (re-pensar estrategia desde cero)
-2. Una vez resuelto: Continuar con Fase 3 de testing (colaboración)
+1. Testing de sistema de familia (Fase 3 desbloqueada)
+2. Probar flujo completo: crear familia → unirse → compartir datos
+3. Actualizar test de data isolation para usar familia

@@ -2,14 +2,15 @@
 
 ## Estado del Proyecto
 
-**Fecha**: 2026-01-18 (Sesión de testing - Actualizado según código real)
-**Fase Actual**: Sistema completo con autenticación real, colaboración multi-usuario, y testing framework ✅
+**Fecha**: 2026-01-19 (Sistema de Familia implementado)
+**Fase Actual**: Sistema completo con autenticación real, sistema de familia, y testing framework ✅
 **Cambios recientes**:
-- Implementado framework de testing completo (Vitest + Playwright)
-- 14 component tests para LoginPage (✅ passing)
-- 11 E2E tests de autenticación (✅ passing)
-- Proyecto de testing Supabase separado configurado
-- **BLOQUEADO**: Test de data isolation por bug crítico de RLS
+- ✅ Sistema de Familia implementado (reemplaza plan_collaborators)
+- ✅ Bug RLS infinite recursion **RESUELTO**
+- ✅ Nuevas tablas: `families`, `family_members`, `user_profiles`
+- ✅ Funciones RPC sin recursión
+- ✅ OAuth callback mejorado (server route)
+- ✅ Testing de familia desbloqueado
 
 ---
 
@@ -80,19 +81,33 @@ Campos:
 - percentage - % de uso del patrón
 ```
 
-#### 5. `plan_collaborators` (nueva) ✅ NUEVO
+#### 5. `families` (nueva) ✅ NUEVO (2026-01-19)
 ```sql
 Campos:
-- id, plan_id, user_id, role ('owner' | 'collaborator')
-- invited_by, invited_at, created_at
-
-Relaciones:
-- plan_id → weekly_plans.id (CASCADE delete)
-- user_id → auth.users.id (CASCADE delete)
-- invited_by → auth.users.id
-
-Unique constraint: (plan_id, user_id)
+- id, name, invite_code (8 chars, único)
+- created_by (usuario admin), created_at, updated_at
 ```
+
+#### 6. `family_members` (nueva) ✅ NUEVO (2026-01-19)
+```sql
+Campos:
+- id, family_id, user_id, role ('admin' | 'member')
+- joined_at
+
+Constraints:
+- unique_user_one_family: Un usuario solo puede estar en una familia
+- Máximo 6 miembros por familia
+```
+
+#### 7. `user_profiles` (nueva) ✅ NUEVO (2026-01-19)
+```sql
+Campos:
+- user_id (PK), email, created_at, updated_at
+
+Propósito: Cache de emails para evitar acceso directo a auth.users
+```
+
+#### ~~5. `plan_collaborators`~~ ❌ DEPRECADO (reemplazado por sistema de familia)
 
 ### Scripts SQL Ejecutados:
 1. ✅ `001_update_ingredient_types.sql` - Actualización de tipos de ingredientes
@@ -100,11 +115,14 @@ Unique constraint: (plan_id, user_id)
 3. ✅ `003_create_weekly_plans.sql` - Tablas de planes y distribuciones
 4. ✅ `004_remove_completo_onces_pattern.sql` - Limpieza de patrones obsoletos
 5. ~~❌ `005_create_dev_user.sql`~~ - ELIMINADO (deuda técnica resuelta)
-6. ✅ `006_create_plan_collaborators.sql` - Sistema de colaboración
+6. ~~✅ `006_create_plan_collaborators.sql`~~ - DEPRECADO (reemplazado por familia)
 7. ✅ `007_create_user_search_function.sql` - Búsqueda segura de usuarios
-8. ❌ `008_fix_rls_recursion.sql` - FALLIDO: Intento de fix RLS infinite recursion
-9. ❌ `009_diagnose_policies.sql` - Queries de diagnóstico (no es migración)
-10. ❌ `010_final_rls_fix.sql` - FALLIDO: Otro intento de fix RLS
+8. ❌ `008-010` - Intentos fallidos de fix RLS (obsoletos)
+11. ✅ `011_family_system.sql` - **Sistema de Familia completo** ✅ NUEVO
+12. ✅ `012_fix_orphan_data.sql` - Fix datos huérfanos
+13. ✅ `013_fix_rls_recursion.sql` - Función helper `get_current_user_family_id`
+14. ✅ `014_fix_get_family_members.sql` - Fix función get_family_members
+15. ✅ `015_fix_get_family_members_v2.sql` - Tabla `user_profiles` para emails
 
 **Ubicación:** [supabase/migrations/](../supabase/migrations/)
 
@@ -463,15 +481,40 @@ Ver: [obsolete/](./obsolete/)
 - [src/lib/weekly-planner.ts](../src/lib/weekly-planner.ts) - Motor de planificación (484 líneas)
 - [src/middleware.ts](../src/middleware.ts) - Protección de rutas ✅ NUEVO
 
+### Sistema de Familia ✅ NUEVO (2026-01-19)
+📁 [src/types/family.ts](../src/types/family.ts) - Tipos TypeScript
+📁 [src/lib/hooks/useFamily.ts](../src/lib/hooks/useFamily.ts) - Hook React
+📁 [src/components/FamilyManager.tsx](../src/components/FamilyManager.tsx) - Componente UI
+📁 [src/app/familia/page.tsx](../src/app/familia/page.tsx) - Página /familia
+
+**Funcionalidades:**
+- Crear familia (hasta 6 miembros)
+- Unirse con código de invitación (8 caracteres)
+- Roles: admin (gestiona miembros) y member
+- Ingredientes y planes compartidos automáticamente
+- Salir de familia (datos se desasocian)
+
+**Funciones RPC (SECURITY DEFINER):**
+- `create_family(name)` - Crea familia + usuario como admin
+- `join_family(invite_code)` - Une usuario a familia
+- `leave_family()` - Sale de familia
+- `get_user_family()` - Info de familia del usuario
+- `get_family_members()` - Lista de miembros
+- `regenerate_invite_code()` - Nuevo código (solo admin)
+- `remove_family_member(user_id)` - Elimina miembro (solo admin)
+- `transfer_admin_role(user_id)` - Transfiere rol admin
+
 ### Componentes
-- [src/components/Header.tsx](../src/components/Header.tsx) - Header dinámico con usuario ✅ NUEVO
+- [src/components/Header.tsx](../src/components/Header.tsx) - Header con nombre de usuario ✅ ACTUALIZADO
 - [src/components/Toast.tsx](../src/components/Toast.tsx) - Notificaciones
 - [src/components/ConfirmDialog.tsx](../src/components/ConfirmDialog.tsx) - Diálogos de confirmación
-- [src/components/CollaboratorsManager.tsx](../src/components/CollaboratorsManager.tsx) - Gestión de colaboradores ✅ NUEVO
+- [src/components/FamilyManager.tsx](../src/components/FamilyManager.tsx) - Gestión de familia ✅ NUEVO
+- ~~[src/components/CollaboratorsManager.tsx]~~ - ❌ ELIMINADO (reemplazado por FamilyManager)
 
 ### Páginas Implementadas
-- [src/app/login/page.tsx](../src/app/login/page.tsx) - Autenticación ✅ NUEVO
-- [src/app/login/callback/page.tsx](../src/app/login/callback/page.tsx) - Callback OAuth ✅ NUEVO
+- [src/app/login/page.tsx](../src/app/login/page.tsx) - Autenticación ✅
+- [src/app/login/callback/route.ts](../src/app/login/callback/route.ts) - Callback OAuth (server route) ✅ ACTUALIZADO
+- [src/app/familia/page.tsx](../src/app/familia/page.tsx) - Gestión de familia ✅ NUEVO
 - [src/app/ingredientes/page.tsx](../src/app/ingredientes/page.tsx) - CRUD completo ✅
   - Filtro multi-select por tipo con botones tipo "pills"
   - Búsqueda por nombre
@@ -632,24 +675,23 @@ Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
 
 ---
 
-**Última actualización**: 2026-01-18 (Sesión de testing - Fase 1 y 2 completadas)
-**Estado**: Sistema completo con autenticación, colaboración, y testing framework implementado ✅
+**Última actualización**: 2026-01-19 (Sistema de Familia implementado)
+**Estado**: Sistema completo con autenticación, familia, y testing framework ✅
 **Cambios de hoy**:
-- ✅ Framework de testing completo (Vitest 2.1.0 + Playwright 1.51.1)
-- ✅ Proyecto Supabase separado para testing
-- ✅ Component tests: LoginPage (14/14 passing)
-- ✅ E2E tests de autenticación (11/11 passing)
-- ✅ Script de creación de usuarios de testing
-- ✅ Custom matchers para Vitest (reemplazo de jest-dom)
-- ❌ Bug crítico descubierto: RLS infinite recursion en plan_collaborators
-- ⚠️ Fase 3 de testing bloqueada hasta resolver bug de RLS
+- ✅ Sistema de Familia completo (estilo Duolingo Family)
+- ✅ Bug RLS infinite recursion **RESUELTO**
+- ✅ Nuevas tablas: `families`, `family_members`, `user_profiles`
+- ✅ Funciones RPC con SECURITY DEFINER (sin recursión)
+- ✅ Nueva página `/familia` con FamilyManager
+- ✅ OAuth callback mejorado (server route)
+- ✅ Header muestra nombre de usuario
+- ✅ Testing de familia desbloqueado
 
 **Verificado contra código real**: Sí ✅
 - Motor de planificación: [src/lib/weekly-planner.ts](../src/lib/weekly-planner.ts)
 - Sistema de patrones: [src/lib/meal-patterns.ts](../src/lib/meal-patterns.ts)
 - Página de planes: [src/app/planes/page.tsx](../src/app/planes/page.tsx)
 - Autenticación: [src/app/login/page.tsx](../src/app/login/page.tsx), [src/middleware.ts](../src/middleware.ts)
-- Colaboración: [src/components/CollaboratorsManager.tsx](../src/components/CollaboratorsManager.tsx)
+- Familia: [src/components/FamilyManager.tsx](../src/components/FamilyManager.tsx), [src/lib/hooks/useFamily.ts](../src/lib/hooks/useFamily.ts)
 - Testing: [tests/component/](../tests/component/), [tests/e2e/](../tests/e2e/)
-- Configuración: [vitest.config.ts](../vitest.config.ts), [playwright.config.ts](../playwright.config.ts)
 - Migraciones SQL: [supabase/migrations/](../supabase/migrations/)

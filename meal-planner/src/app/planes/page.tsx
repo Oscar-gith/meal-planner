@@ -18,7 +18,8 @@ import {
 } from '@/lib/meal-patterns'
 import Toast, { ToastType } from '@/components/Toast'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import CollaboratorsManager from '@/components/CollaboratorsManager'
+import { useFamily } from '@/lib/hooks/useFamily'
+import { Users } from 'lucide-react'
 
 interface SavedPlan {
   id: string
@@ -27,14 +28,7 @@ interface SavedPlan {
   end_date: string
   created_at: string
   user_id: string
-}
-
-interface PlanCollaborator {
-  id: string
-  plan_id: string
-  user_id: string
-  role: 'owner' | 'collaborator'
-  user_email?: string
+  family_id?: string
 }
 
 interface MealEditorProps {
@@ -160,8 +154,8 @@ export default function PlanesPage() {
   // Edit mode
   const [editingMeal, setEditingMeal] = useState<{date: string, mealType: string} | null>(null)
 
-  // Collaborators management
-  const [managingCollaborators, setManagingCollaborators] = useState<{ planId: string; isOwner: boolean } | null>(null)
+  // Family hook
+  const { family_id: familyId, family_name: familyName } = useFamily()
 
   // Toast notifications
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
@@ -342,7 +336,8 @@ export default function PlanesPage() {
                   start_date: generatedPlan.plan.start_date,
                   end_date: generatedPlan.plan.end_date,
                   plan_data: generatedPlan.plan,
-                  user_id: userId
+                  user_id: userId,
+                  family_id: familyId
                 })
 
                 if (error) throw error
@@ -365,7 +360,8 @@ export default function PlanesPage() {
         start_date: generatedPlan.plan.start_date,
         end_date: generatedPlan.plan.end_date,
         plan_data: generatedPlan.plan,
-        user_id: userId
+        user_id: userId,
+        family_id: familyId
       })
 
       if (error) throw error
@@ -591,6 +587,13 @@ export default function PlanesPage() {
         <p className="text-gray-600">
           Genera planes semanales automáticos basados en patrones de comida y tus ingredientes disponibles.
         </p>
+        {/* Family indicator */}
+        {familyId && familyName && (
+          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm">
+            <Users size={14} />
+            Compartido con: {familyName}
+          </div>
+        )}
       </div>
 
       {/* Prerequisites check */}
@@ -966,13 +969,6 @@ export default function PlanesPage() {
                       👁️ Ver
                     </button>
                     <button
-                      onClick={() => setManagingCollaborators({ planId: plan.id, isOwner: plan.user_id === userId })}
-                      className="bg-indigo-600 text-white py-2 px-3 rounded-md hover:bg-indigo-700 font-medium text-sm"
-                      title="Gestionar colaboradores"
-                    >
-                      👥 Colaborar
-                    </button>
-                    <button
                       onClick={() => handleDeletePlan(plan.id, plan.name)}
                       className="bg-red-600 text-white py-2 px-3 rounded-md hover:bg-red-700 font-medium text-sm"
                       title="Eliminar plan"
@@ -986,16 +982,6 @@ export default function PlanesPage() {
           </div>
         )}
       </div>
-
-      {/* Collaborators Manager Modal */}
-      {managingCollaborators && userId && (
-        <CollaboratorsManager
-          planId={managingCollaborators.planId}
-          currentUserId={userId}
-          isOwner={managingCollaborators.isOwner}
-          onClose={() => setManagingCollaborators(null)}
-        />
-      )}
 
       {/* Toast notifications */}
       {toast && (

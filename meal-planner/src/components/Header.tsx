@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, LogOut, Settings } from 'lucide-react'
+import { LogOut, Users } from 'lucide-react'
 
 export default function Header() {
   const [user, setUser] = useState<any>(null)
@@ -58,6 +58,13 @@ export default function Header() {
                 >
                   Planes
                 </Link>
+                <Link
+                  href="/familia"
+                  className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1"
+                >
+                  <Users className="h-4 w-4" />
+                  Mi Familia
+                </Link>
               </nav>
             )}
           </div>
@@ -67,20 +74,13 @@ export default function Header() {
               {user ? (
                 <>
                   {/* User Info */}
-                  <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-700">
-                    <User className="h-4 w-4" />
+                  <div className="hidden sm:flex items-center text-sm text-gray-700">
                     <span className="max-w-[150px] truncate">
-                      {user.email}
+                      {user.user_metadata?.full_name?.split(' ')[0] ||
+                       user.user_metadata?.name?.split(' ')[0] ||
+                       user.email?.split('@')[0]}
                     </span>
                   </div>
-
-                  {/* Settings Button (Optional) */}
-                  <button
-                    className="text-gray-500 hover:text-gray-700 p-2 rounded-md"
-                    title="Configuración"
-                  >
-                    <Settings className="h-5 w-5" />
-                  </button>
 
                   {/* Sign Out Button */}
                   <button

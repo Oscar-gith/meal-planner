@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FoodIngredient, IngredientType, CreateIngredientForm } from '@/types/v2'
-import { Plus, Pencil, Trash2, X, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Search, Users } from 'lucide-react'
 import Toast, { ToastType } from '@/components/Toast'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import { useFamily } from '@/lib/hooks/useFamily'
 
 interface ToastMessage {
   message: string
@@ -34,6 +35,7 @@ export default function IngredientesPage() {
 
   const supabase = createClient()
   const [userId, setUserId] = useState<string | null>(null)
+  const { family_id: familyId, family_name: familyName } = useFamily()
 
   const [ingredientTypes, setIngredientTypes] = useState<string[]>([
     'Fruta',
@@ -134,7 +136,8 @@ export default function IngredientesPage() {
             type: finalType,
             description: formData.description,
             tags: formData.tags,
-            user_id: userId
+            user_id: userId,
+            family_id: familyId
           }))
 
           const { error } = await supabase
@@ -152,7 +155,8 @@ export default function IngredientesPage() {
               type: finalType,
               description: formData.description,
               tags: formData.tags,
-              user_id: userId
+              user_id: userId,
+              family_id: familyId
             })
 
           if (error) throw error
@@ -274,6 +278,13 @@ export default function IngredientesPage() {
           <p className="text-gray-600">
             Gestiona tu biblioteca de ingredientes individuales
           </p>
+          {/* Family indicator */}
+          {familyId && familyName && (
+            <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm">
+              <Users size={14} />
+              Compartido con: {familyName}
+            </div>
+          )}
         </div>
         <button
           onClick={openCreateModal}
