@@ -123,6 +123,18 @@ Propósito: Cache de emails para evitar acceso directo a auth.users
 13. ✅ `013_fix_rls_recursion.sql` - Función helper `get_current_user_family_id`
 14. ✅ `014_fix_get_family_members.sql` - Fix función get_family_members
 15. ✅ `015_fix_get_family_members_v2.sql` - Tabla `user_profiles` para emails
+16. ✅ `016_diagnose_weekly_plans_rls.sql` - Diagnóstico RLS (RAISE NOTICE)
+17. ✅ `017_fix_weekly_plans_security.sql` - Fix inicial weekly_plans
+18. ✅ `018_fix_families_rls.sql` - Fix políticas families
+19. ✅ `019_comprehensive_rls_fix.sql` - Fix consolidado RLS
+20. ✅ `020_verify_and_fix_rls.sql` - **Fix definitivo seguridad RLS** ✅ **APLICADO** (2026-01-23)
+
+**Scripts de diagnóstico creados:**
+- `scripts/diagnose-rls.mjs` - Diagnóstico sin autenticación
+- `scripts/diagnose-data-consistency.mjs` - Verificar consistencia de datos
+- `scripts/diagnose-authenticated.mjs` - Con usuario autenticado
+- `scripts/diagnose-admin.mjs` - Con service role key (bypasea RLS)
+- `scripts/test-rls-security.mjs` - Test completo de seguridad RLS
 
 **Ubicación:** [supabase/migrations/](../supabase/migrations/)
 
@@ -579,25 +591,22 @@ Ver: [obsolete/](./obsolete/)
 - ✅ **Autenticación real implementada** (2026-01-17)
   - Supabase Auth con email/password + Google OAuth
   - Middleware de protección de rutas
-  - Sistema de colaboración multi-usuario
+  - Sistema de familia (reemplaza colaboración)
   - ~~Deuda técnica de autenticación temporal~~ **ELIMINADA**
+- ✅ **Bug crítico de seguridad RLS resuelto** (2026-01-23)
+  - Usuarios ya NO pueden ver planes de otras familias
+  - Políticas RLS con validación explícita `auth.uid() IS NOT NULL`
+  - Scripts de diagnóstico para verificación futura
 
-### 6. Bugs Conocidos y Deuda Técnica Crítica
+### 6. Bugs Conocidos y Deuda Técnica
 
-**🔥 CRÍTICO - BLOQUEA TESTING DE COLABORACIÓN:**
-- **RLS Infinite Recursion en plan_collaborators** (descubierto 2026-01-18)
-  - Error: "infinite recursion detected in policy for relation plan_collaborators"
-  - Causa raíz: Trigger `create_plan_owner_collaborator` + RLS INSERT policy circular
-  - Estado: 8+ intentos de fix fallidos
-  - Impacto: Test de data isolation no puede pasar, bloquea Fase 3 de testing
-  - Archivos afectados:
-    - [supabase/migrations/006_create_plan_collaborators.sql](../supabase/migrations/006_create_plan_collaborators.sql)
-    - [supabase/migrations/008_fix_rls_recursion.sql](../supabase/migrations/008_fix_rls_recursion.sql) - FALLIDO
-    - [supabase/migrations/010_final_rls_fix.sql](../supabase/migrations/010_final_rls_fix.sql) - FALLIDO
-  - **Acción requerida**: Re-pensar estrategia de RLS desde cero (ver BACKLOG.md para opciones)
+**✅ RESUELTOS:**
+- ~~**RLS Infinite Recursion**~~ - Resuelto con sistema de familia (2026-01-19)
+- ~~**Bug seguridad RLS en weekly_plans**~~ - Resuelto con migración 020 (2026-01-23)
 
 **Alta Prioridad:**
-- Motor de reglas: Las reglas no se están aplicando correctamente
+- Motor de reglas: Las reglas no se están aplicando correctamente en el algoritmo
+- UX Móvil: Tipografía muy clara, navegación oculta en vertical, scrolling excesivo
 - Ver sección "🐛 Bugs Pendientes" en [BACKLOG.md](./BACKLOG.md)
 
 ---
@@ -675,17 +684,16 @@ Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
 
 ---
 
-**Última actualización**: 2026-01-19 (Sistema de Familia implementado)
-**Estado**: Sistema completo con autenticación, familia, y testing framework ✅
+**Última actualización**: 2026-01-23 (Bug crítico de seguridad RLS resuelto)
+**Estado**: Seguridad RLS corregida, sistema multi-familia funcionando correctamente ✅
 **Cambios de hoy**:
-- ✅ Sistema de Familia completo (estilo Duolingo Family)
-- ✅ Bug RLS infinite recursion **RESUELTO**
-- ✅ Nuevas tablas: `families`, `family_members`, `user_profiles`
-- ✅ Funciones RPC con SECURITY DEFINER (sin recursión)
-- ✅ Nueva página `/familia` con FamilyManager
-- ✅ OAuth callback mejorado (server route)
-- ✅ Header muestra nombre de usuario
-- ✅ Testing de familia desbloqueado
+- ✅ **Bug crítico de seguridad RESUELTO**: Usuarios ya NO pueden ver planes de otras familias
+- ✅ Políticas RLS corregidas con validación explícita `auth.uid() IS NOT NULL`
+- ✅ Migración `020_verify_and_fix_rls.sql` aplicada y verificada
+- ✅ Políticas actualizadas en 3 tablas: `weekly_plans`, `families`, `food_ingredients`
+- ✅ Políticas circulares en `families` eliminadas (usa EXISTS directo)
+- ✅ 5 scripts de diagnóstico creados para testing futuro
+- ✅ Verificado: Sin autenticación = 0 planes visibles, Con autenticación = solo propios/familia
 
 **Verificado contra código real**: Sí ✅
 - Motor de planificación: [src/lib/weekly-planner.ts](../src/lib/weekly-planner.ts)

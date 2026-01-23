@@ -95,10 +95,26 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Ver sección "Sistema de Familia" abajo
 
 **Prioridad: Alta**
+- [x] ~~**🔒 SEGURIDAD - Planes visibles sin autorización**~~ ✅ **RESUELTO (2026-01-23)**
+  - Problema: Usuarios podían ver planes guardados de otras familias
+  - Causa raíz: Políticas RLS no validaban explícitamente `auth.uid() IS NOT NULL`
+  - Solución: Migración `020_verify_and_fix_rls.sql` con validación explícita
+  - Políticas actualizadas: `weekly_plans`, `families`, `food_ingredients`
+  - Scripts de diagnóstico creados para verificación futura
 - [ ] **Motor de reglas**: Las reglas no se están aplicando correctamente en el algoritmo
 - [ ] Validar que todas las reglas se aplican correctamente
 - [ ] Mejorar logging para debug del algoritmo
 - [x] ~~Datos huérfanos con user_id incorrecto~~ ✅ **RESUELTO** - Migración 012
+
+**Prioridad: Media**
+- [ ] **Home page - Resumen hardcodeado**: Los números en el resumen (96 Alimentos, 6 Reglas, etc.) están hardcodeados y no deberían mostrarse sin usuario logueado
+  - Ocultar sección "Resumen" para usuarios no autenticados
+  - Cargar datos reales desde BD cuando hay usuario logueado
+- [ ] **UX Móvil - Tipografía muy clara**: Los colores de los tipos de letra son muy claros/tenues cuando se ve desde celular, dificulta la lectura
+- [ ] **UX Móvil - Navegación y scrolling**:
+  - Menú horizontal (Ingredientes, Planes, Familia) se oculta en orientación vertical del celular
+  - Solo se muestra cuando el celular está en horizontal
+  - Requiere demasiado scrolling en móvil - optimizar layout para pantallas pequeñas
 
 ---
 
@@ -358,7 +374,22 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - [ ] Drag & drop para reorganizar
 - [ ] Vista calendario para planes generados
 
-#### 15. Analytics y Reportes 📊
+#### 15. Rediseño de Home Page 🏠 NUEVO
+**Objetivo:** Crear una página de inicio que explique de qué se trata la app
+
+**Para usuarios NO autenticados:**
+- [ ] Landing page atractiva que explique el propósito de la app
+- [ ] Secciones: ¿Qué es?, Características, Cómo funciona
+- [ ] Call-to-action claro para registrarse/iniciar sesión
+- [ ] Ocultar sección "Resumen" (no mostrar datos sin login)
+
+**Para usuarios autenticados:**
+- [ ] Dashboard personalizado con datos reales del usuario
+- [ ] Resumen dinámico (ingredientes, planes, familia)
+- [ ] Accesos rápidos a funcionalidades principales
+- [ ] Última actividad o plan reciente
+
+#### 16. Analytics y Reportes 📊
 **Objetivo:** Insights sobre consumo y preferencias del usuario
 
 **Funcionalidades:**
@@ -487,21 +518,21 @@ Ver [obsolete/](obsolete/) para:
 
 ---
 
-**Última actualización:** 2026-01-19 (Sistema de Familia implementado)
-**Estado:** Sistema de familia completo, reemplaza plan_collaborators, bug RLS resuelto
+**Última actualización:** 2026-01-23 (Bug crítico de seguridad RLS resuelto)
+**Estado:** Seguridad RLS corregida, políticas validando autenticación correctamente
 **Cambios de hoy:**
-- ✅ Sistema de Familia implementado (estilo Duolingo Family)
-- ✅ Nuevas tablas: `families`, `family_members`, `user_profiles`
-- ✅ Funciones RPC: create_family, join_family, leave_family, get_family_members, etc.
-- ✅ Políticas RLS sin recursión (función helper `get_current_user_family_id`)
-- ✅ Nueva página `/familia` con FamilyManager component
-- ✅ Ingredientes y planes compartidos automáticamente en familia
-- ✅ OAuth callback mejorado (server route en vez de client component)
-- ✅ Header muestra nombre de usuario en vez de email
-- ✅ Bug RLS infinite recursion **RESUELTO**
-- ❌ Eliminado: CollaboratorsManager (reemplazado por FamilyManager)
+- ✅ Bug crítico de seguridad **RESUELTO**: Usuarios ya NO pueden ver planes de otras familias
+- ✅ Políticas RLS corregidas con validación explícita `auth.uid() IS NOT NULL`
+- ✅ Migración `020_verify_and_fix_rls.sql` aplicada y verificada
+- ✅ Políticas actualizadas: `weekly_plans`, `families`, `food_ingredients`
+- ✅ 5 scripts de diagnóstico creados para testing futuro:
+  - `scripts/diagnose-rls.mjs` - Diagnóstico sin autenticación
+  - `scripts/diagnose-data-consistency.mjs` - Verificar consistencia
+  - `scripts/diagnose-authenticated.mjs` - Con usuario autenticado
+  - `scripts/diagnose-admin.mjs` - Con service role key
+  - `scripts/test-rls-security.mjs` - Test completo de seguridad
 
 **Próximo paso recomendado:**
-1. Testing de sistema de familia (Fase 3 desbloqueada)
-2. Probar flujo completo: crear familia → unirse → compartir datos
-3. Actualizar test de data isolation para usar familia
+1. Testing E2E de aislamiento de datos entre familias
+2. Implementar motor de reglas con validación
+3. Mejoras UX móvil (tipografía, navegación, scrolling)
