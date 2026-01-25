@@ -75,6 +75,7 @@ export interface Rule {
   llm_interpretation?: string | null
   is_active: boolean
   user_id: string
+  family_id?: string | null  // Family sharing support
   created_at?: string
   updated_at?: string
 }

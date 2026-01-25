@@ -1,8 +1,25 @@
 # Prompt de Inicio de Sesión
 
-Copia y pega este prompt al inicio de cada sesión de trabajo con Claude Code:
+## 🚀 Versión Rápida (Recomendada)
+
+Copia y pega este prompt al inicio de cada sesión:
+
+```
+Nueva sesión - lee docs/BACKLOG.md y preséntame:
+1. Estado actual (qué funciona)
+2. Top 3 prioridades
+3. Opciones de trabajo
+
+Espera mi decisión antes de comenzar.
+```
+
+**Por qué es más corto:** Claude Code ya tiene acceso a CLAUDE.md con el contexto completo del proyecto. No necesitas repetir instrucciones detalladas cada vez.
 
 ---
+
+## 📚 Versión Completa (Primera Sesión / Referencia)
+
+Usa esta versión si es tu primera sesión o necesitas contexto detallado:
 
 ```
 Voy a comenzar una nueva sesión de trabajo en el proyecto Meal Planner.
@@ -35,8 +52,8 @@ Por favor, ayúdame a prepararnos siguiendo estos pasos:
 ## Notas de Uso
 
 - **Cuándo usar:** Al inicio de CADA sesión de trabajo
-- **Tiempo estimado:** 2-3 minutos para que Claude lea y prepare el resumen
 - **Resultado esperado:** Un resumen ejecutivo con opciones claras de trabajo
+- **Tracking automático:** Claude usará TodoWrite para gestionar tareas durante la sesión
 
 ## Ejemplo de Respuesta Esperada
 

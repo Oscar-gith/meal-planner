@@ -18,8 +18,10 @@ import {
 } from '@/lib/meal-patterns'
 import Toast, { ToastType } from '@/components/Toast'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import PlanningProgressModal from '@/components/PlanningProgressModal'
 import { useFamily } from '@/lib/hooks/useFamily'
 import { Users } from 'lucide-react'
+import { ConflictDetail, SSEEvent } from '@/types/agent'
 
 interface SavedPlan {
   id: string
@@ -168,6 +170,15 @@ export default function PlanesPage() {
     type?: 'danger' | 'warning' | 'info'
   } | null>(null)
 
+  // Planning progress modal (SSE)
+  const [modalStatus, setModalStatus] = useState<
+    'generating' | 'validating' | 'fixing' | 'success' | 'partial' | 'error' | 'closed'
+  >('closed')
+  const [modalMessage, setModalMessage] = useState<string>('')
+  const [modalConflicts, setModalConflicts] = useState<ConflictDetail[]>([])
+  const [modalErrorMessage, setModalErrorMessage] = useState<string>('')
+  const [retryCount, setRetryCount] = useState<number>(0)
+
   const showToast = (message: string, type: ToastType) => {
     setToast({ message, type })
   }
@@ -179,6 +190,30 @@ export default function PlanesPage() {
     type: 'danger' | 'warning' | 'info' = 'danger'
   ) => {
     setConfirmDialog({ title, message, onConfirm, type })
+  }
+
+  // Modal callbacks
+  const handleModalClose = () => {
+    setModalStatus('closed')
+    setRetryCount(0)
+  }
+
+  const handleModalRetry = () => {
+    if (retryCount >= 2) {
+      // Max retries reached (original + 2 retries = 3 total attempts)
+      showToast('Máximo de intentos alcanzado. Edita el plan manualmente.', 'info')
+      return
+    }
+
+    setRetryCount(retryCount + 1)
+    // Retry with existing plan
+    generatePlanWithSSE(generatedPlan?.plan)
+  }
+
+  const handleModalViewPlan = () => {
+    setModalStatus('closed')
+    setRetryCount(0)
+    // Plan is already set in generatedPlan, just close modal
   }
 
   const supabase = createClient()
@@ -227,6 +262,92 @@ export default function PlanesPage() {
     }
   }
 
+  /**
+   * Generate plan with SSE progress updates
+   */
+  const generatePlanWithSSE = async (existingPlan?: unknown) => {
+    setModalStatus('generating')
+    setModalMessage('Generando tu plan semanal...')
+    setModalConflicts([])
+    setModalErrorMessage('')
+
+    try {
+      const response = await fetch('/api/planning/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          config,
+          familyId,
+          stream: true,
+          existingPlan,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to start planning')
+      }
+
+      if (!response.body) {
+        throw new Error('No response body')
+      }
+
+      // Process SSE stream
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            try {
+              const event = JSON.parse(data) as SSEEvent | { type: 'result'; data: unknown }
+
+              if ('type' in event) {
+                if (event.type === 'result') {
+                  // Final result data
+                  const result = event.data as {
+                    planningResult: PlanningResult
+                    agentLog: unknown
+                  }
+                  setGeneratedPlan(result.planningResult)
+                } else if (event.type === 'generating') {
+                  setModalStatus('generating')
+                  setModalMessage(event.message)
+                } else if (event.type === 'validating') {
+                  setModalStatus('validating')
+                  setModalMessage(`Revisando plan contra ${event.activeRulesCount} reglas activas...`)
+                } else if (event.type === 'fixing') {
+                  setModalStatus('fixing')
+                  setModalMessage(`Aplicando ${event.changesCount} cambios en el plan`)
+                } else if (event.type === 'success') {
+                  setModalStatus('success')
+                } else if (event.type === 'partial_success') {
+                  setModalStatus('partial')
+                  setModalConflicts(event.conflicts)
+                } else if (event.type === 'error') {
+                  setModalStatus('error')
+                  setModalErrorMessage(event.message)
+                }
+              }
+            } catch (parseError) {
+              console.error('Error parsing SSE event:', parseError)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('SSE error:', error)
+      setModalStatus('error')
+      setModalErrorMessage(error instanceof Error ? error.message : 'Error desconocido')
+    }
+  }
+
   const generatePlanInternal = async () => {
     // Validate prerequisites
     const validation = validatePlanningPrerequisites(ingredients, patterns)
@@ -241,10 +362,23 @@ export default function PlanesPage() {
 
     setGenerating(true)
     try {
-      // Create planning engine
-      const engine = new WeeklyPlanningEngine(ingredients, patterns, config)
+      // Check if there are active LLM rules
+      const supabase = createClient()
+      const { data: activeRules } = await supabase
+        .from('rules')
+        .select('id')
+        .eq('family_id', familyId)
+        .eq('is_active', true)
+        .eq('validation_method', 'llm')
 
-      // Generate plan
+      // If there are active rules, use AI-powered planning with SSE
+      if (activeRules && activeRules.length > 0 && familyId) {
+        await generatePlanWithSSE()
+        return
+      }
+
+      // Traditional planning (no rules or AI failed)
+      const engine = new WeeklyPlanningEngine(ingredients, patterns, config)
       const result = engine.generatePlan()
       setGeneratedPlan(result)
 
@@ -1005,6 +1139,18 @@ export default function PlanesPage() {
           type={confirmDialog.type}
         />
       )}
+
+      {/* Planning progress modal (SSE) */}
+      <PlanningProgressModal
+        isOpen={modalStatus !== 'closed'}
+        status={modalStatus}
+        message={modalMessage}
+        conflicts={modalConflicts}
+        errorMessage={modalErrorMessage}
+        onClose={handleModalClose}
+        onRetry={retryCount < 2 ? handleModalRetry : undefined}
+        onViewPlan={handleModalViewPlan}
+      />
     </div>
   )
 }

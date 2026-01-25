@@ -247,34 +247,50 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Estructura clara de carpetas y responsabilidades
 - [x] **Consolidación de documentación**: Todos los .md ya están en `/docs` ✅
 
-#### 7. Separación de Ambientes (Dev/Prod/Test) 🔧 NUEVO
-**Motivación:** Actualmente dev y prod usan la misma base de datos. Riesgo de modificar datos de producción accidentalmente.
+#### 7. Separación de Ambientes (Dev/Test/Prod) 🔧 ACTUALIZADO 2026-01-24
+**Motivación:** Actualmente `npm run dev` conecta a producción y `npm run dev:test` mezcla desarrollo con testing. NO es una buena práctica tener dev y test en el mismo ambiente.
+
+**Situación actual:**
+- **prod**: `ovhzvwmiouaoilswgeef` (usado con `npm run dev` - ⚠️ RIESGO)
+- **test**: `xgofutvrhfpywqhrrvlp` (usado con `npm run dev:test` + E2E tests - ⚠️ MEZCLADO)
+
+**Configuración ideal:**
+- **dev**: Nuevo proyecto Supabase dedicado para desarrollo local
+- **test**: `xgofutvrhfpywqhrrvlp` (SOLO para E2E tests automatizados)
+- **prod**: `ovhzvwmiouaoilswgeef` (producción, sin acceso directo desde dev)
 
 **Tareas:**
-- [ ] **Crear proyecto Supabase separado para desarrollo**
+- [ ] **Crear proyecto Supabase dedicado para desarrollo**
   - Nuevo proyecto en Supabase dashboard
-  - Copiar schema y migraciones
-  - Seed data de desarrollo
-- [ ] **Configurar variables de entorno por ambiente**
-  - `.env.local` → desarrollo local
+  - Aplicar todas las migraciones (000-023)
+  - Seed data de desarrollo (ingredientes ejemplo, patrones, etc.)
+  - Configurar OAuth redirect URLs para localhost:3000
+- [ ] **Reorganizar variables de entorno**
+  - `.env.local` → **desarrollo local** (nuevo proyecto dev)
   - `.env.production` → producción (Vercel)
-  - `.env.test` → testing automatizado
-- [ ] **Documentar proceso de migraciones**
-  - Cómo aplicar migraciones en cada ambiente
-  - Orden de despliegue (test → dev → prod)
-- [ ] **Scripts de setup por ambiente**
-  - `npm run dev` → usa BD de desarrollo
-  - `npm run dev:prod` → conecta a prod (solo lectura, para debug)
-  - `npm run test` → usa BD de testing
+  - `tests/.env.test` → testing (mantener xgofutvrhfpywqhrrvlp, SOLO para E2E)
+- [ ] **Actualizar scripts npm**
+  - `npm run dev` → usa `.env.local` (proyecto dev)
+  - `npm run dev:test` → ELIMINAR (confunde dev con test)
+  - `npm run test:e2e` → usa `tests/.env.test` (proyecto test)
+- [ ] **Documentar flujo de migraciones**
+  - Aplicar primero en dev → testear
+  - Luego en test → E2E tests
+  - Finalmente en prod → deployment
 - [ ] **Protección de producción**
-  - Considerar read-only mode para conexiones de dev
-  - Alertas si se detecta modificación desde ambiente incorrecto
+  - Nunca conectar directamente a prod desde localhost
+  - Considerar IP whitelist en Supabase prod
+  - Monitoreo de conexiones sospechosas
 
 **Beneficios:**
 - ✅ Desarrollo seguro sin riesgo a prod
 - ✅ Testing aislado con datos controlados
+- ✅ Separación clara de responsabilidades
 - ✅ Facilita onboarding de nuevos devs
 - ✅ Permite experimentar sin consecuencias
+
+**Referencias:**
+- [docs/DESARROLLO-LOCAL.md](docs/DESARROLLO-LOCAL.md) - Documentación temporal (será actualizada)
 
 ---
 
@@ -312,32 +328,72 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Aplicar en dropdowns y vistas de listado
   - Auto-reordenar al crear tipo nuevo
 
-#### 11. Motor de Reglas con LLM (NUEVA PROPUESTA) 🤖
-**Motivación:** El motor de reglas fijas es complejo y poco flexible. Propuesta de arquitectura con LLM.
+#### 11. Motor de Reglas con LLM 🤖 ✅ IMPLEMENTADO (Fases 1-3)
+**Motivación:** El motor de reglas fijas es complejo y poco flexible. Arquitectura con LLM implementada.
 
-**Funcionalidades:**
-- [ ] **Evaluador LLM de Planes**: LLM evalúa si el plan generado cumple todas las reglas
-- [ ] **Refinador Autónomo**: Si no cumple reglas, LLM ajusta el plan automáticamente
-- [ ] **CRUD de Reglas en Lenguaje Natural**: Usuario escribe reglas como texto libre
+**✅ FASE 1 - Validación Básica (COMPLETADA 2026-01-24)**
+- [x] **Tabla de reglas** en BD (`rules` table)
+- [x] **CRUD de Reglas en Lenguaje Natural**: Usuario escribe reglas como texto libre
   - Ejemplo: "No repetir ningún ingrediente de onces hasta 2 días después"
   - Ejemplo: "No quiero pescado los viernes"
   - Ejemplo: "Máximo 2 veces arroz por semana"
-- [ ] **Gestión de Reglas**: Activar/desactivar, editar, priorizar reglas
-- [ ] **Sistema de Iteración**: LLM itera hasta que el plan cumpla todas las reglas activas
-- [ ] **Explicación de Cambios**: LLM explica por qué hizo cada ajuste al plan
+- [x] **Gestión de Reglas**: Activar/desactivar reglas (toggle is_active)
+- [x] **Evaluador LLM de Planes**: Gemini valida plan contra reglas activas
+- [x] **Visualización de conflictos**: Warnings mostrados en UI
+- [x] **Validación de reglas** al crearlas con Gemini (rechaza reglas sin sentido)
+- [x] **Inferencia automática**: LLM infiere meal_type y ingredientes mencionados
 
-**Ventajas:**
+**✅ FASE 2 - Modificaciones Automáticas (COMPLETADA 2026-01-24)**
+- [x] **Refinador Autónomo**: LLM ajusta el plan automáticamente si no cumple reglas
+- [x] **Sistema de Iteración**: Agente itera hasta 3 veces para corregir conflictos
+- [x] **Aplicación de cambios**: Modifications aplicadas programáticamente al plan
+- [x] **Workflow con 5 nodos**: generateBasePlan, validateRules, suggestModifications, applyModifications, finalize
+- [x] **Agent logs en BD**: Tabla `agent_logs` para debugging y transparencia
+
+**✅ FASE 3 - Feedback en Tiempo Real (COMPLETADA 2026-01-25)**
+- [x] **SSE (Server-Sent Events)**: Streaming de progreso en tiempo real
+- [x] **Modal de progreso**: `PlanningProgressModal` con estados visuales
+- [x] **Mensajes user-friendly**: 🔄 Generando, 🔍 Revisando, 🔧 Ajustando
+- [x] **Sistema de Reintentos**: Máximo 2 reintentos adicionales (9 iteraciones total)
+- [x] **Visualización de conflictos**: Detalles agrupados por regla con sugerencias
+- [x] **ConflictDetail type**: Formato user-friendly para end users
+
+**Ventajas Implementadas:**
 - ✅ Flexibilidad total: usuario puede crear cualquier regla
 - ✅ Sin código hardcodeado: todas las reglas en BD
 - ✅ Fácil de mantener y extender
 - ✅ Usuario puede ser tan específico como quiera
+- ✅ Feedback en tiempo real durante el proceso
+- ✅ Reintentos automáticos si quedan conflictos
 
-**Arquitectura Propuesta:**
-1. Motor genera plan base con patrones
-2. LLM evalúa plan contra reglas activas
-3. Si no cumple: LLM genera nuevo plan ajustado
-4. Repetir hasta cumplir todas las reglas (max 3-5 iteraciones)
-5. Mostrar plan final + explicación de ajustes
+**Arquitectura Implementada:**
+1. ✅ Motor genera plan base con patrones
+2. ✅ Gemini 2.5 Flash evalúa plan contra reglas activas (SSE: "Revisando...")
+3. ✅ Si no cumple: Gemini sugiere modificaciones específicas
+4. ✅ Aplicación programática de modificaciones (SSE: "Ajustando...")
+5. ✅ Repetir hasta cumplir todas las reglas (max 3 iteraciones × 3 reintentos = 9 total)
+6. ✅ Mostrar plan final + conflictos restantes con sugerencias manuales
+
+**Tecnologías:**
+- Gemini 2.5 Flash (modelo gratuito, `gemini-2.5-flash`)
+- Server-Sent Events (SSE) para streaming
+- Agent pattern con 5 nodos especializados
+- TypeScript types completos (SSEEvent, ConflictDetail)
+
+**Archivos clave:**
+- `src/lib/agents/planning-agent.ts` - Orchestrator
+- `src/lib/agents/nodes/` - Nodos especializados
+- `src/lib/llm/gemini-client.ts` - Cliente Gemini
+- `src/components/PlanningProgressModal.tsx` - UI de progreso
+- `src/app/api/planning/generate/route.ts` - API con SSE
+
+**Pendientes (Fase 4 - Features Avanzados):**
+- [ ] **Explicación de Cambios**: LLM explica por qué hizo cada ajuste (en modal)
+- [ ] **Rule templates**: Templates pre-definidos de reglas comunes
+- [ ] **Priorización de reglas**: Sistema de prioridades entre reglas conflictivas
+- [ ] **Visual diff**: Before/after de las modificaciones aplicadas
+- [ ] **Agent reasoning viewer**: Log detallado del proceso de decisión del agente
+- [ ] **Bulk operations**: Enable/disable múltiples reglas a la vez
 
 #### 12. LLMs y Agentes Inteligentes (Otras Funcionalidades)
 - [ ] Generación de descripciones automáticas de platos
@@ -518,21 +574,31 @@ Ver [obsolete/](obsolete/) para:
 
 ---
 
-**Última actualización:** 2026-01-23 (Bug crítico de seguridad RLS resuelto)
-**Estado:** Seguridad RLS corregida, políticas validando autenticación correctamente
+**Última actualización:** 2026-01-25 (SSE Progress Feedback + Gemini 2.5 Flash)
+**Estado:** Sistema de reglas AI completamente funcional con feedback en tiempo real
 **Cambios de hoy:**
-- ✅ Bug crítico de seguridad **RESUELTO**: Usuarios ya NO pueden ver planes de otras familias
-- ✅ Políticas RLS corregidas con validación explícita `auth.uid() IS NOT NULL`
-- ✅ Migración `020_verify_and_fix_rls.sql` aplicada y verificada
-- ✅ Políticas actualizadas: `weekly_plans`, `families`, `food_ingredients`
-- ✅ 5 scripts de diagnóstico creados para testing futuro:
-  - `scripts/diagnose-rls.mjs` - Diagnóstico sin autenticación
-  - `scripts/diagnose-data-consistency.mjs` - Verificar consistencia
-  - `scripts/diagnose-authenticated.mjs` - Con usuario autenticado
-  - `scripts/diagnose-admin.mjs` - Con service role key
-  - `scripts/test-rls-security.mjs` - Test completo de seguridad
+- ✅ **Sistema SSE (Server-Sent Events)** implementado completamente
+  - Modal de progreso en tiempo real durante generación de planes
+  - Mensajes user-friendly en español (generando, validando, ajustando)
+  - Estados visuales: generating, validating, fixing, success, partial, error
+  - Visualización detallada de conflictos pendientes
+- ✅ **Sistema de Reintentos** implementado
+  - Máximo 2 reintentos adicionales (3 intentos totales = 9 iteraciones LLM)
+  - Botón "Reintentar" con plan existente como base
+  - Overlay "Procesando..." mientras reintenta
+  - Deshabilitación automática después de límite
+- ✅ **Modelo Gemini actualizado** a `gemini-2.5-flash` (modelo gratuito correcto)
+  - Verificado con lista de modelos disponibles de la API
+  - Variable de entorno `GEMINI_MODEL` configurable
+  - Documentación actualizada en `.env.local.example`
+- ✅ **Componente PlanningProgressModal** creado
+  - No bloqueante (puede cerrarse durante proceso)
+  - Botones contextuales: Ver Plan, Reintentar, Entendido
+  - Conflictos agrupados por regla con sugerencias
+- ✅ Build exitoso confirmado
 
 **Próximo paso recomendado:**
-1. Testing E2E de aislamiento de datos entre familias
-2. Implementar motor de reglas con validación
-3. Mejoras UX móvil (tipografía, navegación, scrolling)
+1. Testing manual del flujo SSE completo
+2. Testing E2E de aislamiento de datos entre familias
+3. **Crear proyecto dev separado** (ver sección "7. Separación de Ambientes")
+4. Mejoras UX móvil (tipografía, navegación, scrolling)

@@ -568,7 +568,84 @@ Ver: [obsolete/](./obsolete/)
 - ✅ Homepage rediseñado de 3 a 2 columnas
 - ✅ Todos los archivos SQL y scripts legacy movidos a `docs/obsolete/`
 
-### 3. Mejoras de UX Implementadas (2026-01-17)
+### 3. Sistema de Reglas AI con LLM (2026-01-24/25)
+📁 Arquitectura completa en 3 fases implementadas
+
+**Fase 1 - Validación Básica (2026-01-24)**
+- Tabla `rules` en BD con reglas en lenguaje natural
+- CRUD completo en página `/reglas`
+- Validación de reglas con Gemini al crearlas (rechaza reglas sin sentido)
+- Inferencia automática de `meal_type` e ingredientes mencionados
+- Toggle activate/deactivate por regla
+
+**Fase 2 - Modificaciones Automáticas (2026-01-24)**
+📁 [src/lib/agents/planning-agent.ts](../src/lib/agents/planning-agent.ts) - Orchestrator principal
+- Workflow con 5 nodos especializados:
+  1. `generateBasePlanNode` - Genera plan base con WeeklyPlanningEngine
+  2. `validateRulesNode` - Valida plan contra reglas activas con Gemini
+  3. `suggestModificationsNode` - Gemini sugiere ingredient replacements
+  4. `applyModificationsNode` - Aplica modificaciones programáticamente
+  5. `finalizeNode` - Empaqueta resultado final + warnings
+- Iteración automática hasta 3 veces para corregir conflictos
+- Estado inmutable con spread operator pattern
+- Tabla `agent_logs` en BD para debugging y transparencia
+
+📁 [src/lib/llm/gemini-client.ts](../src/lib/llm/gemini-client.ts) - Cliente Gemini
+- Modelo configurable vía `GEMINI_MODEL` env var
+- Default: `gemini-2.5-flash` (modelo gratuito, verificado con API)
+- Funciones:
+  - `validateRuleText()` - Valida reglas al crearlas
+  - `validatePlanAgainstRules()` - Detecta conflictos en plan
+  - `suggestPlanModifications()` - Propone cambios específicos
+- JSON response con `responseMimeType: 'application/json'`
+- Temperature: 0.1 para respuestas consistentes
+
+**Fase 3 - Feedback en Tiempo Real (2026-01-25)**
+📁 [src/app/api/planning/generate/route.ts](../src/app/api/planning/generate/route.ts)
+- SSE (Server-Sent Events) con `ReadableStream`
+- Función `streamPlanningProgress()` retorna streaming response
+- Headers correctos: `text/event-stream`, `no-cache`, `keep-alive`
+- Función `mapViolationsToConflicts()` convierte violations técnicas a formato user-friendly
+- Soporte para reintentos con `existingPlan` opcional
+
+📁 [src/components/PlanningProgressModal.tsx](../src/components/PlanningProgressModal.tsx)
+- Modal no bloqueante (puede cerrarse durante proceso)
+- Estados: generating, validating, fixing, success, partial, error, closed
+- Mensajes user-friendly en español:
+  - 🔄 "Generando tu plan semanal..."
+  - 🔍 "Revisando plan contra X reglas activas..."
+  - 🔧 "Ajustando plan para cumplir las reglas..."
+- Visualización detallada de conflictos:
+  - Agrupados por regla
+  - Lista de comidas afectadas con día + tipo
+  - Explicación del conflicto
+  - Sugerencia de corrección manual
+- Botones contextuales:
+  - **Ver Plan**: Cierra modal y muestra plan generado
+  - **Reintentar**: Lanza 3 iteraciones más con plan actual (máx 2 veces)
+  - **Entendido**: Solo cierra modal
+
+📁 [src/app/planes/page.tsx](../src/app/planes/page.tsx)
+- Función `generatePlanWithSSE()` consume stream con `fetch` + `ReadableStream.getReader()`
+- Procesa eventos SSE y actualiza modal en tiempo real
+- Lógica de reintentos: máximo 2 adicionales (3 intentos × 3 iteraciones = 9 total)
+- Botón deshabilitado automáticamente después del límite
+- Estados del modal sincronizados con eventos SSE
+
+📁 [src/types/agent.ts](../src/types/agent.ts)
+- `SSEEvent` - Union type de eventos SSE (generating, validating, fixing, success, partial_success, error)
+- `ConflictDetail` - Formato user-friendly para mostrar conflictos pendientes
+- `PlanningAgentState` - Estado del agente con ingredientes, patterns, violations, modifications
+- `PlanningAgentResult` - Resultado final con plan + agent log
+
+**Tecnologías:**
+- Gemini 2.5 Flash API (`@google/generative-ai`)
+- Server-Sent Events (SSE) nativo de Next.js
+- ReadableStream API para streaming
+- Agent pattern con 5 nodos especializados
+- TypeScript types completos
+
+### 4. Mejoras de UX Implementadas (2026-01-17)
 **Filtro Multi-Select de Ingredientes:**
 - Implementado sistema de botones tipo "pills" para filtrar por tipo
 - Permite seleccionar múltiples tipos simultáneamente
@@ -576,7 +653,7 @@ Ver: [obsolete/](./obsolete/)
 - Contador visual de tipos seleccionados
 - Diseño moderno con colores indigo para tipos activos
 
-### 4. Distribuciones de Patrones
+### 5. Distribuciones de Patrones
 - Sistema usa distribuciones hardcodeadas en `DEFAULT_PATTERN_DISTRIBUTIONS`
 - Usuario podrá personalizarlas en el futuro
 - La tabla `pattern_distributions` está creada pero aún no se usa desde UI
@@ -684,16 +761,21 @@ Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
 
 ---
 
-**Última actualización**: 2026-01-23 (Bug crítico de seguridad RLS resuelto)
-**Estado**: Seguridad RLS corregida, sistema multi-familia funcionando correctamente ✅
+**Última actualización**: 2026-01-25 (SSE Progress Feedback + Gemini 2.5 Flash)
+**Estado**: Sistema de reglas AI completamente funcional con feedback en tiempo real ✅
 **Cambios de hoy**:
-- ✅ **Bug crítico de seguridad RESUELTO**: Usuarios ya NO pueden ver planes de otras familias
-- ✅ Políticas RLS corregidas con validación explícita `auth.uid() IS NOT NULL`
-- ✅ Migración `020_verify_and_fix_rls.sql` aplicada y verificada
-- ✅ Políticas actualizadas en 3 tablas: `weekly_plans`, `families`, `food_ingredients`
-- ✅ Políticas circulares en `families` eliminadas (usa EXISTS directo)
-- ✅ 5 scripts de diagnóstico creados para testing futuro
-- ✅ Verificado: Sin autenticación = 0 planes visibles, Con autenticación = solo propios/familia
+- ✅ **Sistema SSE (Server-Sent Events)** implementado completamente
+  - Modal de progreso en tiempo real durante generación de planes con reglas AI
+  - Mensajes user-friendly en español: 🔄 Generando, 🔍 Revisando, 🔧 Ajustando
+  - Estados visuales: generating, validating, fixing, success, partial, error
+  - Visualización detallada de conflictos pendientes agrupados por regla
+- ✅ **Sistema de Reintentos** con plan existente como base
+  - Máximo 2 reintentos adicionales (3 intentos × 3 iteraciones = 9 iteraciones LLM total)
+  - Overlay "Procesando..." durante reintentos
+  - Botón "Reintentar" deshabilitado automáticamente después del límite
+- ✅ **Modelo Gemini actualizado** a `gemini-2.5-flash` (modelo gratuito correcto, verificado con API)
+- ✅ **Componente PlanningProgressModal** creado (no bloqueante, puede cerrarse durante proceso)
+- ✅ Tipos TypeScript completos: `SSEEvent`, `ConflictDetail`
 
 **Verificado contra código real**: Sí ✅
 - Motor de planificación: [src/lib/weekly-planner.ts](../src/lib/weekly-planner.ts)

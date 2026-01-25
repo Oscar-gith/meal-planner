@@ -1,8 +1,21 @@
 # Prompt de Cierre de Sesión
 
-Copia y pega este prompt al FINAL de cada sesión de trabajo con Claude Code:
+## 🚀 Versión Rápida (Recomendada)
+
+Copia y pega este prompt al final de cada sesión:
+
+```
+Cierra sesión: actualiza docs (BACKLOG.md, IMPLEMENTATION-SUMMARY.md)
+con lo completado hoy, verifica consistencia, y sugiere commit si aplica.
+```
+
+**Por qué es más corto:** Claude ya sabe qué hacer (está documentado en CLAUDE.md). Solo necesitas activar el proceso de cierre.
 
 ---
+
+## 📚 Versión Completa (Referencia Detallada)
+
+Usa esta versión si necesitas recordar todos los pasos específicos:
 
 ```
 Hemos terminado la sesión de trabajo de hoy.
@@ -54,7 +67,6 @@ Por favor, ayúdame a cerrar la sesión correctamente:
 ## Notas de Uso
 
 - **Cuándo usar:** Al FINAL de cada sesión de trabajo
-- **Tiempo estimado:** 5-10 minutos para actualizar documentación
 - **Importante:** NO saltes este paso, mantiene la documentación sincronizada
 
 ## Ejemplo de Respuesta Esperada
