@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Meal planner application with 2-level architecture: Ingredients → Meal Patterns → Weekly Plans. Built with Next.js 15, React 19, TypeScript, and Supabase (PostgreSQL + Auth). Features family sharing system similar to Duolingo Family.
 
+**Context:** This is a learning project. The developer is actively learning modern web development practices, which means the codebase may not always follow the most orthodox approaches. When suggesting improvements, prioritize clear explanations and educational value over strict adherence to best practices. Be patient and explain the "why" behind recommendations.
+
 ## Common Commands
 
 ### Development

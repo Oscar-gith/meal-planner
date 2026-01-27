@@ -2,7 +2,7 @@
 
 ## 📌 Estado Actual del Proyecto
 
-**Última actualización:** 2026-01-19 (Sistema de Familia implementado)
+**Última actualización:** 2026-01-26 (Refactorización de Prompts LLM)
 
 ### ✅ Arquitectura Implementada
 
@@ -83,7 +83,13 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - [x] Página `/combinaciones` eliminada (sistema legacy) ✅
 - [x] Tipos deprecados marcados con `@deprecated` en `src/types/v2.ts` ✅
 - [x] Archivos legacy movidos a `docs/obsolete/` ✅
-- [x] Navegación actualizada (solo Ingredientes y Planes) ✅
+- [x] Navegación actualizada (solo Ingredientes, Reglas, Planes, Familia) ✅
+- [x] **Refactorización de Prompts LLM** ✅ NUEVO (2026-01-26)
+  - Prompts extraídos de código TypeScript a archivos `.md` externos
+  - Sistema de template loader con variables y condicionales
+  - Prompt `suggest-modifications` mejorado con validación explícita de patrones
+  - Documentación completa en [src/lib/prompts/README.md](../src/lib/prompts/README.md)
+  - Beneficios: Prompts editables sin recompilar, mejor separación de responsabilidades
 
 ---
 
@@ -101,16 +107,19 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Solución: Migración `020_verify_and_fix_rls.sql` con validación explícita
   - Políticas actualizadas: `weekly_plans`, `families`, `food_ingredients`
   - Scripts de diagnóstico creados para verificación futura
-- [ ] **🤖 Agente AI no respeta patrones al corregir conflictos** 🔥
+- [ ] **🤖 Agente AI no respeta patrones al corregir conflictos** 🔄 EN PRUEBA (2026-01-26)
   - Problema: Cuando el agente AI aplica modificaciones para resolver conflictos, los ingredientes sugeridos no cumplen con los patrones definidos
   - Ejemplo: Patrón "Tradicional con Fruta" requiere [Proteína, Carb, Fruta] pero el agente sugiere solo "Queso"
-  - Causa probable: Prompt de `suggestPlanModifications` no valida contra pattern requirements
+  - Causa raíz: Prompt de `suggestPlanModifications` no validaba explícitamente contra pattern requirements
   - Impacto: Los planes corregidos por IA quedan inválidos/incompletos
-  - Archivo afectado: `src/lib/llm/gemini-client.ts` (función `suggestPlanModifications`)
-  - Solución propuesta:
-    - Mejorar prompt para incluir validación estricta de patrones
-    - Verificar que `new_ingredient_ids` cumplan con `pattern.ingredient_types`
-    - Agregar validación post-modificación antes de aplicar cambios
+  - **Solución implementada (2026-01-26):**
+    - ✅ Prompt mejorado con sección "Pattern Validation Rules"
+    - ✅ Ejemplos explícitos de patrones válidos/inválidos
+    - ✅ Checklist de validación para el LLM
+    - ✅ Énfasis en validación de tipos y cantidades
+    - Archivo: [src/lib/prompts/suggest-modifications.md](../src/lib/prompts/suggest-modifications.md)
+  - **Estado:** Mejora implementada, pendiente validación con casos reales
+  - **Próximo paso:** Testing con reglas que generen conflictos
 - [ ] **Motor de reglas**: Las reglas no se están aplicando correctamente en el algoritmo
 - [ ] Validar que todas las reglas se aplican correctamente
 - [ ] Mejorar logging para debug del algoritmo
@@ -591,31 +600,32 @@ Ver [obsolete/](obsolete/) para:
 
 ---
 
-**Última actualización:** 2026-01-25 (SSE Progress Feedback + Gemini 2.5 Flash)
-**Estado:** Sistema de reglas AI completamente funcional con feedback en tiempo real
+**Última actualización:** 2026-01-26 (Refactorización de Prompts LLM)
+**Estado:** Prompts LLM externalizados y mejorados para mejor mantenibilidad
 **Cambios de hoy:**
-- ✅ **Sistema SSE (Server-Sent Events)** implementado completamente
-  - Modal de progreso en tiempo real durante generación de planes
-  - Mensajes user-friendly en español (generando, validando, ajustando)
-  - Estados visuales: generating, validating, fixing, success, partial, error
-  - Visualización detallada de conflictos pendientes
-- ✅ **Sistema de Reintentos** implementado
-  - Máximo 2 reintentos adicionales (3 intentos totales = 9 iteraciones LLM)
-  - Botón "Reintentar" con plan existente como base
-  - Overlay "Procesando..." mientras reintenta
-  - Deshabilitación automática después de límite
-- ✅ **Modelo Gemini actualizado** a `gemini-2.5-flash` (modelo gratuito correcto)
-  - Verificado con lista de modelos disponibles de la API
-  - Variable de entorno `GEMINI_MODEL` configurable
-  - Documentación actualizada en `.env.local.example`
-- ✅ **Componente PlanningProgressModal** creado
-  - No bloqueante (puede cerrarse durante proceso)
-  - Botones contextuales: Ver Plan, Reintentar, Entendido
-  - Conflictos agrupados por regla con sugerencias
-- ✅ Build exitoso confirmado
+- ✅ **Refactorización de Prompts LLM**
+  - 3 prompts extraídos de código a archivos `.md` externos
+  - Sistema de template loader con variables `{{var}}` y condicionales `{{#if}}`
+  - Cache en memoria para performance
+  - Documentación completa en [src/lib/prompts/README.md](../src/lib/prompts/README.md)
+- ✅ **Mejora del Prompt suggest-modifications**
+  - Sección "Pattern Validation Rules" con guía paso a paso
+  - Ejemplos concretos de patrones válidos/inválidos para cada tipo de comida
+  - Checklist de validación para auto-verificación del LLM
+  - Énfasis explícito en validación de tipos y cantidades de ingredientes
+- ✅ **Navegación actualizada**
+  - Enlace "Reglas" agregado al header entre "Ingredientes" y "Planes"
+  - Orden lógico: Ingredientes → Reglas → Planes → Mi Familia
+- ✅ **Build y deploy exitosos**
 
-**Próximo paso recomendado:**
-1. Testing manual del flujo SSE completo
-2. Testing E2E de aislamiento de datos entre familias
-3. **Crear proyecto dev separado** (ver sección "7. Separación de Ambientes")
+**Beneficios implementados:**
+- Prompts ahora editables sin recompilar código
+- Mejor separación de responsabilidades (infraestructura vs contenido)
+- Historial de cambios de prompts claro en git
+- Facilita A/B testing de diferentes versiones de prompts
+
+**Próximos pasos recomendados:**
+1. Testing del prompt mejorado con reglas que generen conflictos
+2. Separar ambientes dev/test/prod (ver sección "7. Separación de Ambientes")
+3. Testing E2E de sistema de familia
 4. Mejoras UX móvil (tipografía, navegación, scrolling)

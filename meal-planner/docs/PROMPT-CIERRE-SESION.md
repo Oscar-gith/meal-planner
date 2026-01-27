@@ -5,7 +5,7 @@
 Copia y pega este prompt al final de cada sesión:
 
 ```
-Cierra sesión: actualiza docs (BACKLOG.md, IMPLEMENTATION-SUMMARY.md)
+Cierra sesión: actualiza docs (BACKLOG.md, IMPLEMENTATION-SUMMARY.md, CLAUDE.md)
 con lo completado hoy, verifica consistencia, y sugiere commit si aplica.
 ```
 

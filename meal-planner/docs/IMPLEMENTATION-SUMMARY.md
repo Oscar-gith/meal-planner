@@ -645,6 +645,41 @@ Ver: [obsolete/](./obsolete/)
 - Agent pattern con 5 nodos especializados
 - TypeScript types completos
 
+**Fase 4 - Prompts Externos (2026-01-26)**
+📁 [src/lib/prompts/](../src/lib/prompts/) - Sistema de prompts externos
+
+**Motivación:** Prompts embebidos en código TypeScript son difíciles de mantener, versionar y colaborar. Separación necesaria para mejor mantenibilidad.
+
+**Implementación:**
+- ✅ 3 prompts extraídos a archivos `.md` separados:
+  - `validate-rule.md` - Validación de reglas al crearlas
+  - `validate-plan.md` - Detección de violaciones contra reglas activas
+  - `suggest-modifications.md` - Sugerencias de corrección de conflictos
+- ✅ Sistema de template loader: [src/lib/prompts/prompt-loader.ts](../src/lib/prompts/prompt-loader.ts)
+  - Soporte para variables: `{{variableName}}`
+  - Soporte para condicionales: `{{#if var}}...{{/if}}`
+  - Cache en memoria para performance
+  - Mensajes de error claros
+- ✅ Cliente Gemini refactorizado: [src/lib/llm/gemini-client.ts](../src/lib/llm/gemini-client.ts)
+  - Usa `getPrompt()` en lugar de strings embebidos
+  - Código más limpio y enfocado en infraestructura
+  - De ~267 líneas a ~160 líneas efectivas
+- ✅ Prompt `suggest-modifications` mejorado:
+  - Sección "Pattern Validation Rules" con guía paso a paso
+  - Ejemplos concretos de patrones válidos/inválidos
+  - Checklist de validación para el LLM
+  - Validación explícita de tipos y cantidades de ingredientes
+
+**Beneficios:**
+- ✅ Prompts editables sin recompilar código
+- ✅ Historial de cambios claro en git (separado del código)
+- ✅ Fácil colaboración (no-devs pueden editar prompts)
+- ✅ A/B testing sencillo (crear variantes de archivos)
+- ✅ Mejor separación de responsabilidades
+
+**Documentación:**
+- [src/lib/prompts/README.md](../src/lib/prompts/README.md) - Guía completa de uso
+
 ### 4. Mejoras de UX Implementadas (2026-01-17)
 **Filtro Multi-Select de Ingredientes:**
 - Implementado sistema de botones tipo "pills" para filtrar por tipo
@@ -761,25 +796,37 @@ Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
 
 ---
 
-**Última actualización**: 2026-01-25 (SSE Progress Feedback + Gemini 2.5 Flash)
-**Estado**: Sistema de reglas AI completamente funcional con feedback en tiempo real ✅
+**Última actualización**: 2026-01-26 (Refactorización de Prompts LLM)
+**Estado**: Prompts LLM externalizados con sistema de templates para mejor mantenibilidad ✅
 **Cambios de hoy**:
-- ✅ **Sistema SSE (Server-Sent Events)** implementado completamente
-  - Modal de progreso en tiempo real durante generación de planes con reglas AI
-  - Mensajes user-friendly en español: 🔄 Generando, 🔍 Revisando, 🔧 Ajustando
-  - Estados visuales: generating, validating, fixing, success, partial, error
-  - Visualización detallada de conflictos pendientes agrupados por regla
-- ✅ **Sistema de Reintentos** con plan existente como base
-  - Máximo 2 reintentos adicionales (3 intentos × 3 iteraciones = 9 iteraciones LLM total)
-  - Overlay "Procesando..." durante reintentos
-  - Botón "Reintentar" deshabilitado automáticamente después del límite
-- ✅ **Modelo Gemini actualizado** a `gemini-2.5-flash` (modelo gratuito correcto, verificado con API)
-- ✅ **Componente PlanningProgressModal** creado (no bloqueante, puede cerrarse durante proceso)
-- ✅ Tipos TypeScript completos: `SSEEvent`, `ConflictDetail`
+- ✅ **Refactorización de Prompts LLM**
+  - Prompts extraídos de [src/lib/llm/gemini-client.ts](../src/lib/llm/gemini-client.ts) a archivos `.md` externos
+  - 3 archivos creados: `validate-rule.md`, `validate-plan.md`, `suggest-modifications.md`
+  - Sistema de template loader: [src/lib/prompts/prompt-loader.ts](../src/lib/prompts/prompt-loader.ts)
+  - Soporte para variables `{{var}}` y condicionales `{{#if var}}...{{/if}}`
+  - Cache en memoria para optimizar performance
+  - Documentación completa: [src/lib/prompts/README.md](../src/lib/prompts/README.md)
+- ✅ **Mejora del Prompt suggest-modifications**
+  - Sección "Pattern Validation Rules" con validación paso a paso
+  - Ejemplos concretos: Desayuno, Almuerzo, Onces (válidos ✅ e inválidos ❌)
+  - Checklist de validación para que el LLM se auto-verifique
+  - Énfasis explícito: "CRITICALLY IMPORTANT", "MUST", validación de tipos
+- ✅ **Navegación mejorada**
+  - Enlace "Reglas" agregado al header: [src/components/Header.tsx](../src/components/Header.tsx)
+  - Orden: Ingredientes → Reglas → Planes → Mi Familia
+
+**Archivos nuevos creados**:
+- [src/lib/prompts/prompt-loader.ts](../src/lib/prompts/prompt-loader.ts) - Template system
+- [src/lib/prompts/validate-rule.md](../src/lib/prompts/validate-rule.md) - Validación de reglas
+- [src/lib/prompts/validate-plan.md](../src/lib/prompts/validate-plan.md) - Detección de violaciones
+- [src/lib/prompts/suggest-modifications.md](../src/lib/prompts/suggest-modifications.md) - Sugerencias de corrección
+- [src/lib/prompts/README.md](../src/lib/prompts/README.md) - Documentación completa
 
 **Verificado contra código real**: Sí ✅
 - Motor de planificación: [src/lib/weekly-planner.ts](../src/lib/weekly-planner.ts)
 - Sistema de patrones: [src/lib/meal-patterns.ts](../src/lib/meal-patterns.ts)
+- Cliente Gemini: [src/lib/llm/gemini-client.ts](../src/lib/llm/gemini-client.ts) - refactorizado
+- Prompts LLM: [src/lib/prompts/](../src/lib/prompts/) - nueva estructura
 - Página de planes: [src/app/planes/page.tsx](../src/app/planes/page.tsx)
 - Autenticación: [src/app/login/page.tsx](../src/app/login/page.tsx), [src/middleware.ts](../src/middleware.ts)
 - Familia: [src/components/FamilyManager.tsx](../src/components/FamilyManager.tsx), [src/lib/hooks/useFamily.ts](../src/lib/hooks/useFamily.ts)
