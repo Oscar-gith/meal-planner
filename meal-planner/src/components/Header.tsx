@@ -54,6 +54,12 @@ export default function Header() {
                   Ingredientes
                 </Link>
                 <Link
+                  href="/reglas"
+                  className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Reglas
+                </Link>
+                <Link
                   href="/planes"
                   className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
                 >

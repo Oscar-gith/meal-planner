@@ -101,6 +101,16 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Solución: Migración `020_verify_and_fix_rls.sql` con validación explícita
   - Políticas actualizadas: `weekly_plans`, `families`, `food_ingredients`
   - Scripts de diagnóstico creados para verificación futura
+- [ ] **🤖 Agente AI no respeta patrones al corregir conflictos** 🔥
+  - Problema: Cuando el agente AI aplica modificaciones para resolver conflictos, los ingredientes sugeridos no cumplen con los patrones definidos
+  - Ejemplo: Patrón "Tradicional con Fruta" requiere [Proteína, Carb, Fruta] pero el agente sugiere solo "Queso"
+  - Causa probable: Prompt de `suggestPlanModifications` no valida contra pattern requirements
+  - Impacto: Los planes corregidos por IA quedan inválidos/incompletos
+  - Archivo afectado: `src/lib/llm/gemini-client.ts` (función `suggestPlanModifications`)
+  - Solución propuesta:
+    - Mejorar prompt para incluir validación estricta de patrones
+    - Verificar que `new_ingredient_ids` cumplan con `pattern.ingredient_types`
+    - Agregar validación post-modificación antes de aplicar cambios
 - [ ] **Motor de reglas**: Las reglas no se están aplicando correctamente en el algoritmo
 - [ ] Validar que todas las reglas se aplican correctamente
 - [ ] Mejorar logging para debug del algoritmo
@@ -388,6 +398,13 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - `src/app/api/planning/generate/route.ts` - API con SSE
 
 **Pendientes (Fase 4 - Features Avanzados):**
+- [ ] **🎨 Mensajes de progreso más amigables estilo Claude Code** 🔥
+  - Problema: Modal "Validando plan..." no aporta información útil y toma tiempo, usuario puede pensar que se bloqueó
+  - Solución: Agregar mensajes rotativos temáticos sobre cocina
+  - Ejemplos: "Cocinando...", "Mezclando ingredientes...", "Agregando una pizca de sal...", "Paciencia, el resultado va a estar delicioso...", "Probando la sazón...", "Ajustando la temperatura...", "Dejando reposar..."
+  - Implementación: Array de mensajes rotativos cada 2-3 segundos durante fase "validating" y "fixing"
+  - Archivo afectado: `src/components/PlanningProgressModal.tsx`
+  - Beneficio: Mejor UX, usuario sabe que el proceso está activo
 - [ ] **Explicación de Cambios**: LLM explica por qué hizo cada ajuste (en modal)
 - [ ] **Rule templates**: Templates pre-definidos de reglas comunes
 - [ ] **Priorización de reglas**: Sistema de prioridades entre reglas conflictivas
