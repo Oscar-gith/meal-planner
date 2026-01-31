@@ -2,9 +2,9 @@
 
 ## Estado del Proyecto
 
-**Fecha**: 2026-01-19 (Sistema de Familia implementado)
-**Fase Actual**: Sistema completo con autenticación real, sistema de familia, y testing framework ✅
-**Cambios recientes**:
+**Fecha**: 2026-01-30 (última actualización)
+**Fase Actual**: Sistema completo con autenticación real, sistema de familia, testing framework, y UX mejorado ✅
+**Cambios recientes (Sistema de Familia - 2026-01-19)**:
 - ✅ Sistema de Familia implementado (reemplaza plan_collaborators)
 - ✅ Bug RLS infinite recursion **RESUELTO**
 - ✅ Nuevas tablas: `families`, `family_members`, `user_profiles`
@@ -796,9 +796,19 @@ Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
 
 ---
 
-**Última actualización**: 2026-01-26 (Refactorización de Prompts LLM)
-**Estado**: Prompts LLM externalizados con sistema de templates para mejor mantenibilidad ✅
+**Última actualización**: 2026-01-30 (Animación SVG en modal de progreso AI)
+**Estado**: Modal de progreso mejorado con feedback visual animado y mensajes temáticos ✅
 **Cambios de hoy**:
+- ✅ **SVG Animado en Modal de Progreso AI**
+  - SVG personalizado de olla con burbujas de vapor subiendo
+  - Animación de tapa con efecto de vapor escapando (keyframes SVG)
+  - 10 mensajes rotativos temáticos sobre cocina
+  - Rotación automática cada 2.5 segundos durante procesamiento
+  - Archivo modificado: [src/components/PlanningProgressModal.tsx](../src/components/PlanningProgressModal.tsx)
+  - Beneficio: Mejor UX, usuario recibe feedback constante que el proceso está activo
+- ✅ **Opción Lottie agregada al backlog** como mejora opcional futura
+
+**Cambios previos (2026-01-26)**:
 - ✅ **Refactorización de Prompts LLM**
   - Prompts extraídos de [src/lib/llm/gemini-client.ts](../src/lib/llm/gemini-client.ts) a archivos `.md` externos
   - 3 archivos creados: `validate-rule.md`, `validate-plan.md`, `suggest-modifications.md`
@@ -815,7 +825,7 @@ Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
   - Enlace "Reglas" agregado al header: [src/components/Header.tsx](../src/components/Header.tsx)
   - Orden: Ingredientes → Reglas → Planes → Mi Familia
 
-**Archivos nuevos creados**:
+**Archivos creados en sesión anterior (2026-01-26)**:
 - [src/lib/prompts/prompt-loader.ts](../src/lib/prompts/prompt-loader.ts) - Template system
 - [src/lib/prompts/validate-rule.md](../src/lib/prompts/validate-rule.md) - Validación de reglas
 - [src/lib/prompts/validate-plan.md](../src/lib/prompts/validate-plan.md) - Detección de violaciones

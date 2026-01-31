@@ -7,6 +7,7 @@
  */
 
 import { ConflictDetail } from '@/types/agent'
+import { useState, useEffect } from 'react'
 
 interface PlanningProgressModalProps {
   isOpen: boolean
@@ -19,6 +20,20 @@ interface PlanningProgressModalProps {
   onViewPlan?: () => void
 }
 
+// Cooking-themed messages for rotating display
+const COOKING_MESSAGES = [
+  'Cocinando...',
+  'Mezclando ingredientes...',
+  'Agregando una pizca de sal...',
+  'Paciencia, el resultado va a estar delicioso...',
+  'Probando la sazón...',
+  'Ajustando la temperatura...',
+  'Dejando reposar...',
+  'Removiendo con cuidado...',
+  'Esperando el punto perfecto...',
+  'Añadiendo el toque final...',
+]
+
 export default function PlanningProgressModal({
   isOpen,
   status,
@@ -29,6 +44,20 @@ export default function PlanningProgressModal({
   onRetry,
   onViewPlan,
 }: PlanningProgressModalProps) {
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
+
+  // Rotate cooking messages every 2.5 seconds during processing
+  useEffect(() => {
+    const isProcessing = status === 'generating' || status === 'validating' || status === 'fixing'
+    if (!isProcessing) return
+
+    const interval = setInterval(() => {
+      setCurrentMessageIndex((prev) => (prev + 1) % COOKING_MESSAGES.length)
+    }, 2500)
+
+    return () => clearInterval(interval)
+  }, [status])
+
   if (!isOpen || status === 'closed') {
     return null
   }
@@ -73,20 +102,166 @@ export default function PlanningProgressModal({
           {/* Processing state */}
           {isProcessing && (
             <div className="text-center">
-              {/* Spinner */}
-              <div className="flex justify-center mb-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              {/* Animated Cooking SVG */}
+              <div className="flex justify-center mb-6">
+                <svg
+                  width="120"
+                  height="120"
+                  viewBox="0 0 120 120"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="cooking-animation"
+                >
+                  {/* Pot body */}
+                  <rect
+                    x="30"
+                    y="50"
+                    width="60"
+                    height="45"
+                    rx="4"
+                    fill="#4B5563"
+                    stroke="#1F2937"
+                    strokeWidth="2"
+                  />
+
+                  {/* Pot handles */}
+                  <path
+                    d="M 25 60 Q 20 60 20 65 L 20 70 Q 20 75 25 75"
+                    fill="none"
+                    stroke="#1F2937"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 95 60 Q 100 60 100 65 L 100 70 Q 100 75 95 75"
+                    fill="none"
+                    stroke="#1F2937"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Pot lid */}
+                  <ellipse cx="60" cy="50" rx="32" ry="8" fill="#6B7280" stroke="#1F2937" strokeWidth="2">
+                    <animateTransform
+                      attributeName="transform"
+                      type="translate"
+                      values="0,0; 0,-3; 0,0"
+                      dur="1.5s"
+                      repeatCount="indefinite"
+                    />
+                  </ellipse>
+
+                  {/* Lid handle */}
+                  <ellipse cx="60" cy="45" rx="8" ry="4" fill="#9CA3AF" stroke="#1F2937" strokeWidth="1.5">
+                    <animateTransform
+                      attributeName="transform"
+                      type="translate"
+                      values="0,0; 0,-3; 0,0"
+                      dur="1.5s"
+                      repeatCount="indefinite"
+                    />
+                  </ellipse>
+
+                  {/* Steam bubbles */}
+                  <circle cx="50" cy="45" r="3" fill="#93C5FD" opacity="0.6">
+                    <animate
+                      attributeName="cy"
+                      values="45; 25; 45"
+                      dur="2s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0.6; 0; 0.6"
+                      dur="2s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+
+                  <circle cx="60" cy="42" r="4" fill="#93C5FD" opacity="0.6">
+                    <animate
+                      attributeName="cy"
+                      values="42; 20; 42"
+                      dur="2.3s"
+                      begin="0.3s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0.6; 0; 0.6"
+                      dur="2.3s"
+                      begin="0.3s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+
+                  <circle cx="70" cy="44" r="3.5" fill="#93C5FD" opacity="0.6">
+                    <animate
+                      attributeName="cy"
+                      values="44; 22; 44"
+                      dur="2.1s"
+                      begin="0.6s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0.6; 0; 0.6"
+                      dur="2.1s"
+                      begin="0.6s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+
+                  {/* Additional small bubbles */}
+                  <circle cx="55" cy="46" r="2" fill="#BFDBFE" opacity="0.5">
+                    <animate
+                      attributeName="cy"
+                      values="46; 28; 46"
+                      dur="1.8s"
+                      begin="0.2s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0.5; 0; 0.5"
+                      dur="1.8s"
+                      begin="0.2s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+
+                  <circle cx="65" cy="47" r="2.5" fill="#BFDBFE" opacity="0.5">
+                    <animate
+                      attributeName="cy"
+                      values="47; 26; 47"
+                      dur="2.2s"
+                      begin="0.5s"
+                      repeatCount="indefinite"
+                    />
+                    <animate
+                      attributeName="opacity"
+                      values="0.5; 0; 0.5"
+                      dur="2.2s"
+                      begin="0.5s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                </svg>
               </div>
 
               {/* Status message */}
-              <p className="text-gray-700 text-base mb-2">
+              <p className="text-gray-700 text-base mb-2 font-medium">
                 {status === 'generating' && '🔄 Generando tu plan semanal...'}
                 {status === 'validating' && '🔍 Revisando plan contra reglas activas...'}
                 {status === 'fixing' && '🔧 Ajustando plan para cumplir las reglas...'}
               </p>
 
+              {/* Rotating cooking message */}
+              <p className="text-gray-600 text-sm italic transition-opacity duration-500">
+                {COOKING_MESSAGES[currentMessageIndex]}
+              </p>
+
               {/* Additional message */}
-              {message && <p className="text-gray-600 text-sm">{message}</p>}
+              {message && <p className="text-gray-500 text-xs mt-2">{message}</p>}
             </div>
           )}
 

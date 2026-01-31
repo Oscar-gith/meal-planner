@@ -114,7 +114,7 @@ Key method: `generatePlan()` returns a `PlanningResult` with plan, warnings, and
   /components             # Reusable components
     Toast.tsx             # Toast notifications
     ConfirmDialog.tsx     # Confirmation dialogs
-    PlanningProgressModal.tsx  # SSE progress modal
+    PlanningProgressModal.tsx  # SSE progress modal with animated SVG
   /lib
     /supabase             # Supabase client (browser + server)
     /agents               # AI agent system (LangGraph-inspired)

@@ -2,7 +2,7 @@
 
 ## 📌 Estado Actual del Proyecto
 
-**Última actualización:** 2026-01-26 (Refactorización de Prompts LLM)
+**Última actualización:** 2026-01-30 (Animación SVG en modal de progreso AI)
 
 ### ✅ Arquitectura Implementada
 
@@ -346,6 +346,15 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - [ ] **Orden alfabético automático**: Tipos de alimento ordenados alfabéticamente
   - Aplicar en dropdowns y vistas de listado
   - Auto-reordenar al crear tipo nuevo
+- [ ] **Favicon y Branding**: Actualizar identidad visual de la app
+  - Cambiar favicon actual por uno relacionado con alimentación saludable
+  - Revisar y actualizar paleta de colores y estilos generales
+  - Usar temas visuales relacionados con comida saludable, nutrición
+- [ ] **Información Nutricional en Ingredientes**: Agregar campos nutricionales
+  - Permitir incluir calorías en ingredientes
+  - Considerar otros campos nutricionales (proteínas, carbohidratos, grasas, etc.)
+  - Diseñar UI para mostrar y editar esta información
+  - Evaluar si usar API externa para datos nutricionales o entrada manual
 
 #### 11. Motor de Reglas con LLM 🤖 ✅ IMPLEMENTADO (Fases 1-3)
 **Motivación:** El motor de reglas fijas es complejo y poco flexible. Arquitectura con LLM implementada.
@@ -407,13 +416,19 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - `src/app/api/planning/generate/route.ts` - API con SSE
 
 **Pendientes (Fase 4 - Features Avanzados):**
-- [ ] **🎨 Mensajes de progreso más amigables estilo Claude Code** 🔥
-  - Problema: Modal "Validando plan..." no aporta información útil y toma tiempo, usuario puede pensar que se bloqueó
-  - Solución: Agregar mensajes rotativos temáticos sobre cocina
-  - Ejemplos: "Cocinando...", "Mezclando ingredientes...", "Agregando una pizca de sal...", "Paciencia, el resultado va a estar delicioso...", "Probando la sazón...", "Ajustando la temperatura...", "Dejando reposar..."
-  - Implementación: Array de mensajes rotativos cada 2-3 segundos durante fase "validating" y "fixing"
-  - Archivo afectado: `src/components/PlanningProgressModal.tsx`
-  - Beneficio: Mejor UX, usuario sabe que el proceso está activo
+- [x] **🎨 Mensajes de progreso más amigables estilo Claude Code** ✅ **COMPLETADO (2026-01-30)**
+  - ✅ SVG animado de olla con burbujas de vapor subiendo
+  - ✅ Animación de tapa moviéndose (simulando vapor escapando)
+  - ✅ Mensajes rotativos temáticos sobre cocina (10 mensajes)
+  - ✅ Rotación automática cada 2.5 segundos durante procesamiento
+  - Archivo modificado: [src/components/PlanningProgressModal.tsx](../src/components/PlanningProgressModal.tsx)
+  - Beneficio: Mejor UX, feedback visual que el proceso está activo
+- [ ] **🎬 Animación Lottie para modal de progreso** (Mejora Opcional)
+  - Mejora sobre SVG actual: animación de mayor calidad
+  - Opciones: LottieFiles (buscar animación de cocina) o crear custom
+  - Requiere: Instalar `lottie-react` (~30KB gzipped)
+  - Trade-off: Mejor calidad visual vs dependencia adicional
+  - Prioridad: Baja (SVG actual ya funciona bien)
 - [ ] **Explicación de Cambios**: LLM explica por qué hizo cada ajuste (en modal)
 - [ ] **Rule templates**: Templates pre-definidos de reglas comunes
 - [ ] **Priorización de reglas**: Sistema de prioridades entre reglas conflictivas
@@ -421,7 +436,217 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - [ ] **Agent reasoning viewer**: Log detallado del proceso de decisión del agente
 - [ ] **Bulk operations**: Enable/disable múltiples reglas a la vez
 
-#### 12. LLMs y Agentes Inteligentes (Otras Funcionalidades)
+#### 12. Migración a LangGraph/LangChain 🎓 PROYECTO DE APRENDIZAJE
+**Motivación:** Implementar un flujo agnético real usando LangGraph en lugar del patrón manual actual. Esto es principalmente un proyecto de aprendizaje para dominar herramientas modernas de agentic AI.
+
+**Estado actual:**
+- ✅ Patrón agnético manual funcional (sin framework)
+- ✅ Dependencias instaladas pero sin usar: `@langchain/core`, `@langchain/langgraph`
+- ✅ SDK de Gemini usado directamente: `@google/generative-ai`
+
+**Objetivo:** Refactorizar el sistema de agentes para usar LangGraph, aprendiendo:
+- StateGraph y flujos con ciclos condicionales
+- LangChain prompts y chains
+- Checkpoints y persistencia de estado
+- Human-in-the-loop patterns
+- Streaming de eventos
+
+**Plan de Implementación (4 Fases):**
+
+**📚 FASE 0 - Estudio y Prototipo (RECOMENDADO EMPEZAR AQUÍ)**
+- [ ] **Tutorial de LangGraph**: Completar tutorial oficial
+  - Docs: https://langchain-ai.github.io/langgraphjs/tutorials/
+  - Conceptos clave: StateGraph, Annotation, addNode, addEdge, addConditionalEdges
+- [ ] **Ejemplo simple**: Crear ejemplo de "hello world" con LangGraph
+  - Archivo: `src/lib/agents/examples/hello-world-graph.ts`
+  - Grafo básico: Input → Process → Output
+  - Entender ciclo completo antes de refactorizar código existente
+- [ ] **Integración Gemini + LangChain**: Probar `ChatGoogleGenerativeAI`
+  - Docs: https://js.langchain.com/docs/integrations/chat/google_generativeai
+  - Comparar con SDK directo actual
+  - Validar que funciona con prompts existentes
+
+**🏗️ FASE 1 - Setup y Estructura (1-2 días)**
+- [ ] **Dependencias adicionales**:
+  ```bash
+  npm install @langchain/google-genai
+  ```
+- [ ] **Configurar LangChain con Gemini**:
+  - Archivo: `src/lib/llm/langchain-gemini.ts`
+  - Setup de `ChatGoogleGenerativeAI` con configuración JSON
+  - Migrar config actual (temperature, response format)
+- [ ] **Definir StateGraph con Anotaciones**:
+  - Archivo: `src/lib/agents/planning-graph.ts`
+  - Definir `PlanningState` con `Annotation.Root()`
+  - Campos: config, currentPlan, violations, modifications, iterationCount, etc.
+  - Documentar cada campo con comentarios
+- [ ] **Migrar Prompts a LangChain Templates**:
+  - Convertir prompts `.md` a `ChatPromptTemplate`
+  - Usar variables con sintaxis LangChain `{variable}`
+  - Mantener archivos `.md` como documentación
+
+**🔄 FASE 2 - Nodos del Grafo (2-3 días)**
+- [ ] **Convertir Nodos Existentes**:
+  - `generateBasePlanNode`: Generar plan base (no requiere LLM)
+  - `validateRulesNode`: Usar chain LangChain para validación
+  - `suggestModificationsNode`: Chain con structured output
+  - `applyModificationsNode`: Aplicar cambios (no requiere LLM)
+  - `finalizeNode`: Preparar resultado final
+- [ ] **Implementar Routing Condicional**:
+  - Función: `shouldContinueFixing(state)`
+  - Returns: `"suggest" | "finalize"`
+  - Lógica: violaciones === 0 o iterationCount >= MAX
+- [ ] **Construir el Grafo**:
+  ```typescript
+  const workflow = new StateGraph(PlanningState)
+    .addNode("generate", generateBasePlanNode)
+    .addNode("validate", validateRulesNode)
+    .addNode("suggest", suggestModificationsNode)
+    .addNode("apply", applyModificationsNode)
+    .addNode("finalize", finalizeNode)
+    .addEdge("generate", "validate")
+    .addConditionalEdges("validate", shouldContinueFixing)
+    .addEdge("suggest", "apply")
+    .addEdge("apply", "validate") // Loop back
+    .addEdge("finalize", END)
+  ```
+- [ ] **Manejo de Errores**:
+  - Try/catch en cada nodo
+  - Fallback a plan base si falla validación
+  - Log de errores en `agent_logs`
+
+**💾 FASE 3 - Persistencia y Debugging (1-2 días)**
+- [ ] **Checkpoints en BD**:
+  - Tabla nueva: `agent_checkpoints` (estado serializado)
+  - Permite pausar/resumir ejecución
+  - Útil para debugging y análisis post-mortem
+- [ ] **Integración con agent_logs**:
+  - Log de cada transición de nodo
+  - Timestamp de entrada/salida de cada nodo
+  - Estado completo en cada checkpoint
+- [ ] **Visualización del Grafo**:
+  - Generar diagrama Mermaid del grafo
+  - Endpoint: `GET /api/planning/graph` devuelve Mermaid
+  - UI: Mostrar grafo en página de debug
+- [ ] **Testing**:
+  - Unit tests para cada nodo
+  - Integration test del grafo completo
+  - Comparar resultados con implementación actual
+
+**🚀 FASE 4 - Features Avanzados (Opcional)**
+- [ ] **Human-in-the-Loop**:
+  - Pausa antes de aplicar modificaciones
+  - Usuario aprueba/rechaza cambios sugeridos
+  - Nodo especial: `waitForHumanApproval`
+- [ ] **Memory y Context**:
+  - Recordar planes anteriores del usuario
+  - Aprender de preferencias históricas
+  - Sugerencias basadas en historial
+- [ ] **Streaming Mejorado**:
+  - Stream de cada nodo en tiempo real
+  - Progreso granular (% completado por nodo)
+  - Tokens generados en tiempo real
+- [ ] **Multi-Agent System**:
+  - Agente especializado en nutrición
+  - Agente especializado en variedad
+  - Agente coordinador que orquesta
+
+**Archivos que se Crearán/Modificarán:**
+```
+src/lib/
+  agents/
+    examples/
+      hello-world-graph.ts           # Ejemplo educativo
+    planning-graph.ts                 # Nuevo: StateGraph con LangGraph
+    planning-agent.ts                 # Modificar: usar planning-graph
+    state.ts                          # Modificar: usar Annotation.Root()
+    routing.ts                        # Nuevo: funciones de routing
+    nodes/
+      generate-base-plan.ts           # Adaptar a LangGraph
+      validate-rules.ts               # Adaptar a LangGraph
+      suggest-modifications.ts        # Adaptar a LangGraph
+      apply-modifications.ts          # Adaptar a LangGraph
+      finalize.ts                     # Adaptar a LangGraph
+  llm/
+    langchain-gemini.ts               # Nuevo: setup de ChatGoogleGenerativeAI
+    gemini-client.ts                  # Deprecar (usar langchain-gemini)
+  prompts/
+    langchain/                        # Nuevo: prompts con ChatPromptTemplate
+      validate-plan.ts
+      suggest-modifications.ts
+      validate-rule.ts
+
+tests/
+  agents/
+    planning-graph.test.ts            # Tests del grafo
+    nodes.test.ts                     # Tests de nodos individuales
+
+docs/
+  LANGGRAPH-TUTORIAL.md               # Tutorial paso a paso
+  LANGGRAPH-MIGRATION.md              # Guía de migración
+```
+
+**Recursos de Aprendizaje:**
+- 📖 **LangGraph Docs**: https://langchain-ai.github.io/langgraphjs/
+- 📖 **LangChain Docs**: https://js.langchain.com/docs/
+- 🎥 **LangGraph Tutorials**: https://www.youtube.com/@LangChain
+- 📖 **Agentic Patterns**: https://langchain-ai.github.io/langgraphjs/concepts/agentic_concepts/
+- 📖 **StateGraph Guide**: https://langchain-ai.github.io/langgraphjs/how-tos/state-model/
+
+**Beneficios de Aprendizaje:**
+- ✅ Patrón StateGraph para flujos complejos con estado
+- ✅ Conditional routing y decisiones basadas en estado
+- ✅ Checkpoints para debugging y persistencia
+- ✅ Chains y prompts estructurados con LangChain
+- ✅ Integración con Gemini via LangChain
+- ✅ Streaming de eventos desde el grafo
+- ✅ Human-in-the-loop patterns
+- ✅ Best practices de agentic AI en producción
+
+**Comparación: Antes vs Después**
+
+**Antes (Manual):**
+```typescript
+// Loop manual con estado mutable
+while (state.iterationCount < MAX_ITERATIONS) {
+  state = { ...state, ...(await validateRulesNode(state)) }
+  if (state.violations.length === 0) break
+  state = { ...state, ...(await suggestModificationsNode(state)) }
+  state = { ...state, ...(await applyModificationsNode(state)) }
+}
+```
+
+**Después (LangGraph):**
+```typescript
+// Grafo declarativo con transiciones automáticas
+const workflow = new StateGraph(PlanningState)
+  .addNode("validate", validateRulesNode)
+  .addNode("suggest", suggestModificationsNode)
+  .addNode("apply", applyModificationsNode)
+  .addConditionalEdges("validate", shouldContinueFixing)
+  .addEdge("suggest", "apply")
+  .addEdge("apply", "validate")
+
+const graph = workflow.compile()
+const result = await graph.invoke(initialState)
+```
+
+**Ventajas del enfoque LangGraph:**
+- ✅ Más declarativo y fácil de entender
+- ✅ Checkpoints automáticos en cada nodo
+- ✅ Visualización del flujo (Mermaid)
+- ✅ Debugging más fácil (inspeccionar estado en cada paso)
+- ✅ Pausar/resumir ejecución
+- ✅ Composición de grafos (sub-graphs)
+- ✅ Estándar de la industria para agentic AI
+
+**Cuándo Implementar:**
+- Este es un proyecto de refactorización, no agrega funcionalidad nueva
+- Prioridad: **MEDIA-BAJA** (funcionalidad actual ya funciona)
+- Ideal para: Sesión de aprendizaje dedicada (4-6 horas)
+- Recomendación: Empezar con Fase 0 (tutorial) cuando tengas tiempo de aprender
+
+#### 13. LLMs y Agentes Inteligentes (Otras Funcionalidades)
 - [ ] Generación de descripciones automáticas de platos
 - [ ] Sugerencias inteligentes basadas en historial
 - [ ] Chat bot para consultas sobre nutrición
@@ -600,9 +825,17 @@ Ver [obsolete/](obsolete/) para:
 
 ---
 
-**Última actualización:** 2026-01-26 (Refactorización de Prompts LLM)
-**Estado:** Prompts LLM externalizados y mejorados para mejor mantenibilidad
+**Última actualización:** 2026-01-30 (Animación SVG en modal de progreso AI)
+**Estado:** Modal de progreso mejorado con animación visual y mensajes rotativos
 **Cambios de hoy:**
+- ✅ **SVG Animado en Modal de Progreso** (Fase 4)
+  - SVG personalizado de olla con burbujas de vapor
+  - Animación de tapa moviéndose (simulando vapor escapando)
+  - 10 mensajes rotativos temáticos sobre cocina
+  - Rotación automática cada 2.5 segundos
+  - Archivo modificado: [src/components/PlanningProgressModal.tsx](../src/components/PlanningProgressModal.tsx)
+- ✅ **Opción Lottie agregada al backlog** como mejora futura opcional
+**Cambios previos (2026-01-26):**
 - ✅ **Refactorización de Prompts LLM**
   - 3 prompts extraídos de código a archivos `.md` externos
   - Sistema de template loader con variables `{{var}}` y condicionales `{{#if}}`
