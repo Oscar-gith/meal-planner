@@ -309,7 +309,7 @@ To configure hooks interactively:
 - [docs/BACKLOG.md](docs/BACKLOG.md) - Full roadmap, completed features, pending tasks
 - [docs/IMPLEMENTATION-SUMMARY.md](docs/IMPLEMENTATION-SUMMARY.md) - Technical implementation details
 - [docs/MEAL-PATTERNS-FINAL.md](docs/MEAL-PATTERNS-FINAL.md) - Meal pattern system documentation
-- [SETUP-AUTH.md](SETUP-AUTH.md) - Authentication setup guide
+- [docs/SETUP-AUTH.md](docs/SETUP-AUTH.md) - Authentication setup guide
 - [docs/PROMPT-INICIO-SESION.md](docs/PROMPT-INICIO-SESION.md) - Session start prompt (detailed reference)
 - [docs/PROMPT-CIERRE-SESION.md](docs/PROMPT-CIERRE-SESION.md) - Session close prompt (detailed reference)
 

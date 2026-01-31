@@ -474,7 +474,7 @@ Pero solo Patrón 1 está disponible:
 - [BACKLOG.md](./BACKLOG.md) - Tareas pendientes organizadas por prioridad
 - [MEAL-PATTERNS-FINAL.md](./MEAL-PATTERNS-FINAL.md) - Definición completa de patrones
 - [IMPLEMENTATION-SUMMARY.md](./IMPLEMENTATION-SUMMARY.md) - Este archivo
-- [SETUP-AUTH.md](../SETUP-AUTH.md) - Guía de configuración de autenticación ✅ NUEVO
+- [SETUP-AUTH.md](./SETUP-AUTH.md) - Guía de configuración de autenticación ✅ NUEVO
 
 ### Documentación Obsoleta
 Ver: [obsolete/](./obsolete/)
@@ -725,6 +725,22 @@ Ver: [obsolete/](./obsolete/)
 - Motor de reglas: Las reglas no se están aplicando correctamente en el algoritmo
 - UX Móvil: Tipografía muy clara, navegación oculta en vertical, scrolling excesivo
 - Ver sección "🐛 Bugs Pendientes" en [BACKLOG.md](./BACKLOG.md)
+
+### 7. Mantenimiento del Repositorio (2026-01-30)
+
+**Limpieza de archivos en raíz:**
+- ✅ Movido `SETUP-AUTH.md` → [docs/SETUP-AUTH.md](./SETUP-AUTH.md) para mejor organización
+- ✅ Eliminados archivos JavaScript obsoletos no usados:
+  - `check-env.js` (sin referencias en código)
+  - `simple-server.js` (sin referencias en código)
+  - `static-server.js` (sin referencias en código)
+- ✅ Actualizadas todas las referencias en documentación:
+  - [CLAUDE.md](../CLAUDE.md) - Link actualizado
+  - [BACKLOG.md](./BACKLOG.md) - Path relativo corregido
+  - [IMPLEMENTATION-SUMMARY.md](./IMPLEMENTATION-SUMMARY.md) - Path relativo corregido
+- ✅ Build verificado exitosamente sin errores
+
+**Beneficio:** Raíz del repositorio más limpia y organizada, solo con archivos esenciales de configuración.
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## 📌 Estado Actual del Proyecto
 
-**Última actualización:** 2026-01-30 (Animación SVG en modal de progreso AI)
+**Última actualización:** 2026-01-30 (Limpieza de archivos en raíz del repositorio)
 
 ### ✅ Arquitectura Implementada
 
@@ -167,7 +167,14 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - [x] `007_create_user_search_function.sql` - Búsqueda segura de usuarios
 
 **Documentación creada:**
-- [x] [SETUP-AUTH.md](../SETUP-AUTH.md) - Guía completa de configuración
+- [x] [SETUP-AUTH.md](SETUP-AUTH.md) - Guía completa de configuración
+
+**Mantenimiento del repositorio (2026-01-30):**
+- [x] Limpieza de raíz del proyecto
+  - Movido `SETUP-AUTH.md` a `docs/` para mejor organización
+  - Eliminados archivos obsoletos: `check-env.js`, `simple-server.js`, `static-server.js` (no usados)
+  - Actualizadas referencias en CLAUDE.md, BACKLOG.md, IMPLEMENTATION-SUMMARY.md
+  - Build verificado exitosamente ✓
 
 **Estado:** ✅ **LISTO PARA PRODUCCIÓN** (autenticación configurada y probada)
 
