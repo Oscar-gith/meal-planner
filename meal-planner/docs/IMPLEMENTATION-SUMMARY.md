@@ -128,6 +128,11 @@ Propósito: Cache de emails para evitar acceso directo a auth.users
 18. ✅ `018_fix_families_rls.sql` - Fix políticas families
 19. ✅ `019_comprehensive_rls_fix.sql` - Fix consolidado RLS
 20. ✅ `020_verify_and_fix_rls.sql` - **Fix definitivo seguridad RLS** ✅ **APLICADO** (2026-01-23)
+21. ✅ `021_create_rules_table.sql` - Tabla de reglas con AI validation ✅ NUEVO (2026-01-24)
+22. ✅ `022_add_family_id_to_rules.sql` - Family sharing para reglas ✅ NUEVO (2026-01-24)
+23. ✅ `023_create_agent_logs.sql` - Logs de agente LangGraph para debugging ✅ NUEVO (2026-01-24)
+24. ✅ `024_enable_rls_family_members.sql` - **Fix crítico seguridad family_members** ✅ **APLICADO** (2026-01-30)
+25. ✅ `025_cleanup_legacy_tables.sql` - Eliminación de 7 tablas legacy/no usadas ✅ **APLICADO** (2026-01-30)
 
 **Scripts de diagnóstico creados:**
 - `scripts/diagnose-rls.mjs` - Diagnóstico sin autenticación
@@ -796,9 +801,20 @@ Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
 
 ---
 
-**Última actualización**: 2026-01-30 (Animación SVG en modal de progreso AI)
-**Estado**: Modal de progreso mejorado con feedback visual animado y mensajes temáticos ✅
+**Última actualización**: 2026-01-30 (Fix crítico de seguridad RLS + Animación SVG)
+**Estado**: Bug crítico de seguridad resuelto + UX mejorado con animación SVG ✅
 **Cambios de hoy**:
+- ✅ **🔒 FIX CRÍTICO DE SEGURIDAD - RLS en family_members**
+  - **Problema**: Tabla `family_members` sin RLS desde migración 013 (completamente expuesta)
+  - **Impacto**: Cualquier usuario autenticado podía ver/modificar todos los miembros de todas las familias
+  - **Solución**: Migración [024_enable_rls_family_members.sql](../supabase/migrations/024_enable_rls_family_members.sql)
+  - RLS habilitado con políticas que usan `get_current_user_family_id()` (SECURITY DEFINER, sin recursión)
+  - SELECT: Solo miembros de la familia del usuario
+  - INSERT/UPDATE/DELETE: Bloqueados (solo via RPC functions: create_family, join_family, etc.)
+  - **Limpieza adicional**: Migración [025_cleanup_legacy_tables.sql](../supabase/migrations/025_cleanup_legacy_tables.sql)
+    - Eliminadas 7 tablas legacy: meal_combinations, food_ingredients_backup, total_plans, plans_with_family, families_count, weekly_plans_count, ingredients_count
+    - Tablas no usadas en código (verificado con grep)
+  - **Resultado**: Security Advisor limpio - 8 errores → 0 errores ✅
 - ✅ **SVG Animado en Modal de Progreso AI**
   - SVG personalizado de olla con burbujas de vapor subiendo
   - Animación de tapa con efecto de vapor escapando (keyframes SVG)

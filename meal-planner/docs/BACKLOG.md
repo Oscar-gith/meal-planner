@@ -107,6 +107,15 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Solución: Migración `020_verify_and_fix_rls.sql` con validación explícita
   - Políticas actualizadas: `weekly_plans`, `families`, `food_ingredients`
   - Scripts de diagnóstico creados para verificación futura
+- [x] ~~**🔒 SEGURIDAD CRÍTICA - family_members sin RLS**~~ ✅ **RESUELTO (2026-01-30)**
+  - Problema: Tabla `family_members` completamente expuesta a cualquier usuario autenticado
+  - Causa raíz: Migración 013 deshabilitó RLS para resolver recursión infinita, pero nunca se volvió a habilitar
+  - Impacto: Cualquier usuario podía ver/modificar todos los miembros de todas las familias
+  - Solución: Migración `024_enable_rls_family_members.sql`
+  - RLS habilitado con políticas seguras usando `get_current_user_family_id()` (SECURITY DEFINER)
+  - Operaciones INSERT/UPDATE/DELETE bloqueadas (solo via RPC functions)
+  - Limpieza adicional: 7 tablas legacy eliminadas con migración `025_cleanup_legacy_tables.sql`
+  - Security Advisor: ✅ Sin errores (8 errores → 0 errores)
 - [ ] **🤖 Agente AI no respeta patrones al corregir conflictos** 🔄 EN PRUEBA (2026-01-26)
   - Problema: Cuando el agente AI aplica modificaciones para resolver conflictos, los ingredientes sugeridos no cumplen con los patrones definidos
   - Ejemplo: Patrón "Tradicional con Fruta" requiere [Proteína, Carb, Fruta] pero el agente sugiere solo "Queso"
@@ -825,9 +834,16 @@ Ver [obsolete/](obsolete/) para:
 
 ---
 
-**Última actualización:** 2026-01-30 (Animación SVG en modal de progreso AI)
-**Estado:** Modal de progreso mejorado con animación visual y mensajes rotativos
+**Última actualización:** 2026-01-30 (Fix crítico de seguridad RLS + Animación SVG)
+**Estado:** Bug crítico de seguridad resuelto + UX mejorado con animación SVG
 **Cambios de hoy:**
+- ✅ **🔒 FIX CRÍTICO DE SEGURIDAD - RLS en family_members**
+  - Tabla `family_members` estaba completamente expuesta (cualquier usuario podía ver/modificar todo)
+  - RLS habilitado con políticas seguras usando `get_current_user_family_id()`
+  - Operaciones directas bloqueadas (solo via RPC functions)
+  - 7 tablas legacy eliminadas (meal_combinations, backups, stats no usadas)
+  - Migraciones: `024_enable_rls_family_members.sql`, `025_cleanup_legacy_tables.sql`
+  - **Security Advisor limpio: 8 errores → 0 errores** ✅
 - ✅ **SVG Animado en Modal de Progreso** (Fase 4)
   - SVG personalizado de olla con burbujas de vapor
   - Animación de tapa moviéndose (simulando vapor escapando)
