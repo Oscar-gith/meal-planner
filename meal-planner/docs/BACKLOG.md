@@ -2,7 +2,7 @@
 
 ## 📌 Estado Actual del Proyecto
 
-**Última actualización:** 2026-01-30 (Limpieza de archivos en raíz del repositorio)
+**Última actualización:** 2026-02-01 (Separación completa de ambientes Dev/Test/Prod)
 
 ### ✅ Arquitectura Implementada
 
@@ -282,42 +282,39 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Estructura clara de carpetas y responsabilidades
 - [x] **Consolidación de documentación**: Todos los .md ya están en `/docs` ✅
 
-#### 7. Separación de Ambientes (Dev/Test/Prod) 🔧 ACTUALIZADO 2026-01-24
+#### 7. Separación de Ambientes (Dev/Test/Prod) ✅ **COMPLETADO** 2026-02-01
 **Motivación:** Actualmente `npm run dev` conecta a producción y `npm run dev:test` mezcla desarrollo con testing. NO es una buena práctica tener dev y test en el mismo ambiente.
 
-**Situación actual:**
-- **prod**: `ovhzvwmiouaoilswgeef` (usado con `npm run dev` - ⚠️ RIESGO)
-- **test**: `xgofutvrhfpywqhrrvlp` (usado con `npm run dev:test` + E2E tests - ⚠️ MEZCLADO)
-
-**Configuración ideal:**
-- **dev**: Nuevo proyecto Supabase dedicado para desarrollo local
+**Configuración implementada:**
+- **dev**: `vxhjzhwlyuiinpelpqae` (desarrollo local, datos clonados de prod)
 - **test**: `xgofutvrhfpywqhrrvlp` (SOLO para E2E tests automatizados)
-- **prod**: `ovhzvwmiouaoilswgeef` (producción, sin acceso directo desde dev)
+- **prod**: `ovhzvwmiouaoilswgeef` (producción, variables en Vercel)
 
-**Tareas:**
-- [ ] **Crear proyecto Supabase dedicado para desarrollo**
-  - Nuevo proyecto en Supabase dashboard
-  - Aplicar todas las migraciones (000-023)
-  - Seed data de desarrollo (ingredientes ejemplo, patrones, etc.)
-  - Configurar OAuth redirect URLs para localhost:3000
-- [ ] **Reorganizar variables de entorno**
-  - `.env.local` → **desarrollo local** (nuevo proyecto dev)
-  - `.env.production` → producción (Vercel)
-  - `tests/.env.test` → testing (mantener xgofutvrhfpywqhrrvlp, SOLO para E2E)
-- [ ] **Actualizar scripts npm**
+**Tareas completadas:**
+- [x] **Crear proyecto Supabase dedicado para desarrollo**
+  - Nuevo proyecto `vxhjzhwlyuiinpelpqae` creado en nueva organización
+  - Migraciones aplicadas desde producción
+  - Datos clonados desde producción usando `scripts/migrate-prod-to-dev-direct.sh`
+  - OAuth redirect URLs configurados
+- [x] **Reorganizar variables de entorno**
+  - `.env.local` → **desarrollo local** (proyecto dev vxhjzhwlyuiinpelpqae)
+  - `.env.production` → producción (backup local, no se commitea)
+  - `tests/.env.test` → testing (proyecto test xgofutvrhfpywqhrrvlp)
+  - `.env.example` → template con valores dummy
+- [x] **Actualizar scripts npm**
   - `npm run dev` → usa `.env.local` (proyecto dev)
-  - `npm run dev:test` → ELIMINAR (confunde dev con test)
+  - `npm run dev:test` → ELIMINADO ✅
   - `npm run test:e2e` → usa `tests/.env.test` (proyecto test)
-- [ ] **Documentar flujo de migraciones**
-  - Aplicar primero en dev → testear
-  - Luego en test → E2E tests
-  - Finalmente en prod → deployment
-- [ ] **Protección de producción**
-  - Nunca conectar directamente a prod desde localhost
-  - Considerar IP whitelist en Supabase prod
-  - Monitoreo de conexiones sospechosas
+- [x] **Documentar flujo de migraciones**
+  - Documentación completa en [docs/AMBIENTES.md](AMBIENTES.md)
+  - Scripts de migración en `scripts/migrate-prod-to-dev-direct.sh`
+  - Scripts de adaptación de IDs en `scripts/replace-user-ids.sh`
+- [x] **Protección de producción**
+  - Desarrollo completamente aislado de producción
+  - Producción solo accesible vía Vercel deployment
+  - Variables de producción solo en Vercel, no en archivos locales
 
-**Beneficios:**
+**Beneficios logrados:**
 - ✅ Desarrollo seguro sin riesgo a prod
 - ✅ Testing aislado con datos controlados
 - ✅ Separación clara de responsabilidades
@@ -325,7 +322,9 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - ✅ Permite experimentar sin consecuencias
 
 **Referencias:**
-- [docs/DESARROLLO-LOCAL.md](docs/DESARROLLO-LOCAL.md) - Documentación temporal (será actualizada)
+- [docs/AMBIENTES.md](AMBIENTES.md) - Documentación completa de ambientes ⭐ NUEVO
+- [scripts/migrate-prod-to-dev-direct.sh](../scripts/migrate-prod-to-dev-direct.sh) - Script de migración automática
+- [scripts/replace-user-ids.sh](../scripts/replace-user-ids.sh) - Script para adaptar IDs de usuario
 
 ---
 
@@ -882,6 +881,5 @@ Ver [obsolete/](obsolete/) para:
 
 **Próximos pasos recomendados:**
 1. Testing del prompt mejorado con reglas que generen conflictos
-2. Separar ambientes dev/test/prod (ver sección "7. Separación de Ambientes")
-3. Testing E2E de sistema de familia
-4. Mejoras UX móvil (tipografía, navegación, scrolling)
+2. Testing E2E de sistema de familia
+3. Mejoras UX móvil (tipografía, navegación, scrolling)

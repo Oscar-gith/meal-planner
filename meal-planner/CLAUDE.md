@@ -12,14 +12,13 @@ Meal planner application with 2-level architecture: Ingredients → Meal Pattern
 
 ### Development
 ```bash
-npm run dev              # Start dev server (uses production Supabase)
-npm run dev:test         # Start dev server with test environment (RECOMMENDED for local dev)
+npm run dev              # Start dev server (uses .env.local = dev project)
 npm run build            # Production build
 npm start                # Production server
 npm run lint             # Run ESLint
 ```
 
-**IMPORTANT:** Use `npm run dev:test` for local development to avoid redirects to production. See [docs/DESARROLLO-LOCAL.md](docs/DESARROLLO-LOCAL.md) for environment configuration.
+**IMPORTANT:** `npm run dev` now uses the development Supabase project (vxhjzhwlyuiinpelpqae), which is safe for experimentation. See [docs/AMBIENTES.md](docs/AMBIENTES.md) for full environment configuration.
 
 ### Testing
 ```bash
@@ -31,7 +30,7 @@ npm run test:e2e:ui      # Playwright UI mode
 npm run test:e2e:debug   # Playwright debug mode
 ```
 
-**Important:** Testing uses separate Supabase project configured in `tests/.env.test`. Always use `dev:test` when running E2E tests.
+**Important:** Testing uses separate Supabase project (xgofutvrhfpywqhrrvlp) configured in `tests/.env.test`.
 
 ## Architecture
 
@@ -162,12 +161,21 @@ Migrations are in `/supabase/migrations/` with numeric prefixes (e.g., `000_init
 
 ## Environment Variables
 
-Required in `.env.local`:
+The project uses **3 separate environments**, each with its own Supabase project:
+
+| Environment | File | Supabase Project | Purpose |
+|-------------|------|------------------|---------|
+| Development | `.env.local` | vxhjzhwlyuiinpelpqae | Local dev, safe for experimentation |
+| Testing | `tests/.env.test` | xgofutvrhfpywqhrrvlp | Automated tests (Vitest + Playwright) |
+| Production | Vercel env vars | ovhzvwmiouaoilswgeef | Deployed app |
+
+### Development Environment (.env.local)
+
 ```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# Supabase Dev Project
+NEXT_PUBLIC_SUPABASE_URL=https://vxhjzhwlyuiinpelpqae.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_dev_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_dev_service_role_key
 
 # Gemini AI (for rules validation)
 GOOGLE_API_KEY=your_gemini_api_key
@@ -176,12 +184,30 @@ GOOGLE_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
+### Testing Environment (tests/.env.test)
+
+```env
+# Supabase Test Project
+NEXT_PUBLIC_SUPABASE_URL=https://xgofutvrhfpywqhrrvlp.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_test_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_test_service_role_key
+GOOGLE_API_KEY=your_gemini_api_key
+```
+
+### Production Environment (Vercel)
+
+Configured in Vercel Dashboard → Project Settings → Environment Variables:
+- `NEXT_PUBLIC_SUPABASE_URL` → https://ovhzvwmiouaoilswgeef.supabase.co
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` → prod_anon_key
+- `SUPABASE_SERVICE_ROLE_KEY` → prod_service_role_key
+- `GOOGLE_API_KEY` → your_gemini_api_key
+
 **Gemini Model Options:**
-- `gemini-2.5-flash` - Latest free tier (recommended for testing)
+- `gemini-2.5-flash` - Latest free tier (recommended for dev/test)
 - `gemini-2.0-flash-exp` - Experimental with better reasoning (for production)
 - `gemini-flash-latest` - Alias for latest stable flash model
 
-For testing, use `tests/.env.test` with separate Supabase project.
+**See [docs/AMBIENTES.md](docs/AMBIENTES.md) for complete environment configuration guide.**
 
 ## Important Patterns & Conventions
 
@@ -216,18 +242,16 @@ const page1 = await context1.newPage()
 
 ## Known Issues & Gotchas
 
-1. **Production DB in Dev:** `npm run dev` connects to production Supabase. Use `npm run dev:test` for safe testing.
+1. **Motor de Reglas:** Rule engine exists but rules are not fully applied by the algorithm. Needs validation improvement.
 
-2. **Motor de Reglas:** Rule engine exists but rules are not fully applied by the algorithm. Needs validation improvement.
-
-3. **Mobile UX Issues:**
+2. **Mobile UX Issues:**
    - Typography colors too light on mobile
    - Horizontal menu hidden in vertical orientation
    - Excessive scrolling required
 
-4. **Security - Plan Visibility:** Non-family members can see saved plans from other families. RLS policies on `weekly_plans` need review.
+3. **Security - Plan Visibility:** Non-family members can see saved plans from other families. RLS policies on `weekly_plans` need review.
 
-5. **Home Page Hardcoded Stats:** Summary numbers (96 Alimentos, etc.) are hardcoded and shown to unauthenticated users.
+4. **Home Page Hardcoded Stats:** Summary numbers (96 Alimentos, etc.) are hardcoded and shown to unauthenticated users.
 
 ## Testing Strategy
 
@@ -308,6 +332,7 @@ To configure hooks interactively:
 - [README.md](README.md) - Quick start guide (in Spanish)
 - [docs/BACKLOG.md](docs/BACKLOG.md) - Full roadmap, completed features, pending tasks
 - [docs/IMPLEMENTATION-SUMMARY.md](docs/IMPLEMENTATION-SUMMARY.md) - Technical implementation details
+- [docs/AMBIENTES.md](docs/AMBIENTES.md) - Environment configuration (dev, test, prod)
 - [docs/MEAL-PATTERNS-FINAL.md](docs/MEAL-PATTERNS-FINAL.md) - Meal pattern system documentation
 - [docs/SETUP-AUTH.md](docs/SETUP-AUTH.md) - Authentication setup guide
 - [docs/PROMPT-INICIO-SESION.md](docs/PROMPT-INICIO-SESION.md) - Session start prompt (detailed reference)

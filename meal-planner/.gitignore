@@ -47,3 +47,10 @@ next-env.d.ts
 # claude code
 .claude/session-log.txt
 .claude/settings.local.json
+
+# database dumps and migrations (contain sensitive data)
+scripts/prod-*.sql
+scripts/consolidated-dev-migration.sql
+
+# supabase temp files
+supabase/.temp/
