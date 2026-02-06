@@ -2,7 +2,7 @@
 
 ## 📌 Estado Actual del Proyecto
 
-**Última actualización:** 2026-02-01 (Separación completa de ambientes Dev/Test/Prod)
+**Última actualización:** 2026-02-06 (Mejoras UX mobile + Fix bug LLM sin familia)
 
 ### ✅ Arquitectura Implementada
 
@@ -67,6 +67,13 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Ver planes guardados
   - **Planes compartidos con familia** ✅ ACTUALIZADO (2026-01-19)
   - **Autenticación real integrada** ✅
+  - **Drag & Drop para intercambiar comidas** ✅ NUEVO (2026-02-06)
+    - Arrastra y suelta comidas del mismo tipo entre días
+    - Efectos visuales (opacity, ring, scale)
+    - Validación automática de tipo de comida
+  - **Regeneración con patrón random** ✅ NUEVO (2026-02-06)
+    - Selecciona cualquier patrón disponible (no solo el actual)
+    - Mayor variedad al regenerar múltiples veces
 
 ### Bugs Resueltos
 - [x] Bug calendario: domingo incluido incorrectamente ✅
@@ -116,6 +123,16 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
   - Operaciones INSERT/UPDATE/DELETE bloqueadas (solo via RPC functions)
   - Limpieza adicional: 7 tablas legacy eliminadas con migración `025_cleanup_legacy_tables.sql`
   - Security Advisor: ✅ Sin errores (8 errores → 0 errores)
+- [x] ~~**🤖 Sistema no usaba LLM sin familia**~~ ✅ **RESUELTO (2026-02-06)**
+  - Problema: API requería `familyId` obligatorio, rechazaba requests sin familia (400 Bad Request)
+  - Causa raíz: Validación estricta en frontend (planes/page.tsx) y backend (api/planning/generate/route.ts)
+  - Impacto: Usuarios sin familia nunca podían usar el motor AI aunque tuvieran reglas activas
+  - Solución:
+    - ✅ Frontend: Query de reglas condicional (con/sin familyId)
+    - ✅ Backend API: `familyId` ahora opcional (`string | null`), validación eliminada
+    - ✅ Backend API: Query de reglas e ingredientes condicional
+    - ✅ Agent: Parámetro `familyId` actualizado a `string | null`
+  - Resultado: Sistema usa LLM correctamente con o sin familia
 - [ ] **🤖 Agente AI no respeta patrones al corregir conflictos** 🔄 EN PRUEBA (2026-01-26)
   - Problema: Cuando el agente AI aplica modificaciones para resolver conflictos, los ingredientes sugeridos no cumplen con los patrones definidos
   - Ejemplo: Patrón "Tradicional con Fruta" requiere [Proteína, Carb, Fruta] pero el agente sugiere solo "Queso"
@@ -138,11 +155,15 @@ Ver [MEAL-PATTERNS-FINAL.md](MEAL-PATTERNS-FINAL.md) y [IMPLEMENTATION-SUMMARY.m
 - [ ] **Home page - Resumen hardcodeado**: Los números en el resumen (96 Alimentos, 6 Reglas, etc.) están hardcodeados y no deberían mostrarse sin usuario logueado
   - Ocultar sección "Resumen" para usuarios no autenticados
   - Cargar datos reales desde BD cuando hay usuario logueado
-- [ ] **UX Móvil - Tipografía muy clara**: Los colores de los tipos de letra son muy claros/tenues cuando se ve desde celular, dificulta la lectura
-- [ ] **UX Móvil - Navegación y scrolling**:
-  - Menú horizontal (Ingredientes, Planes, Familia) se oculta en orientación vertical del celular
-  - Solo se muestra cuando el celular está en horizontal
-  - Requiere demasiado scrolling en móvil - optimizar layout para pantallas pequeñas
+- [x] ~~**UX Móvil - Tipografía muy clara**~~ ✅ **RESUELTO (2026-02-06)**
+  - Problema: Colores de texto muy claros/tenues en mobile (text-gray-500/600)
+  - Solución: Cambiado a text-gray-700/900 para mejor contraste
+  - Archivos: page.tsx, ingredientes/page.tsx, planes/page.tsx, Header.tsx
+- [x] ~~**UX Móvil - Navegación y scrolling**~~ ✅ **RESUELTO (2026-02-06)**
+  - Problema: Menú horizontal oculto en orientación vertical
+  - Solución: Implementado menú hamburguesa lateral (MobileSidebar.tsx)
+  - Features: Overlay, animación slide-in, solo visible en mobile (md:hidden)
+  - Incluye todos los enlaces, info de usuario y cierre de sesión
 
 ---
 

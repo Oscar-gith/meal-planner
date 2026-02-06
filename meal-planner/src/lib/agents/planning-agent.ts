@@ -38,7 +38,7 @@ export async function runPlanningAgent(
   patterns: MealPattern[],
   rules: Rule[],
   _userId: string,
-  _familyId: string,
+  _familyId: string | null,
   existingPlan?: unknown,
   onProgress?: (event: SSEEvent) => void
 ): Promise<PlanningAgentResult> {

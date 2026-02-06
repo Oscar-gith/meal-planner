@@ -65,7 +65,7 @@ function MealEditor({ meal, ingredients, onSave, onCancel }: MealEditorProps) {
 
   return (
     <div className="border-t pt-2 mt-2">
-      <p className="text-xs text-gray-600 mb-2">Selecciona ingredientes:</p>
+      <p className="text-xs text-gray-700 mb-2">Selecciona ingredientes:</p>
       <div className="space-y-1 max-h-48 overflow-y-auto mb-2">
         {availableIngredients.map((ingredient) => (
           <label
@@ -155,6 +155,10 @@ export default function PlanesPage() {
 
   // Edit mode
   const [editingMeal, setEditingMeal] = useState<{date: string, mealType: string} | null>(null)
+
+  // Drag & drop state
+  const [draggedMeal, setDraggedMeal] = useState<{date: string, mealType: string} | null>(null)
+  const [dragOverMeal, setDragOverMeal] = useState<{date: string, mealType: string} | null>(null)
 
   // Family hook
   const { family_id: familyId, family_name: familyName } = useFamily()
@@ -364,15 +368,22 @@ export default function PlanesPage() {
     try {
       // Check if there are active LLM rules
       const supabase = createClient()
-      const { data: activeRules } = await supabase
+
+      // Query for rules: with family_id if available, or without if not
+      let rulesQuery = supabase
         .from('rules')
         .select('id')
-        .eq('family_id', familyId)
         .eq('is_active', true)
         .eq('validation_method', 'llm')
 
+      if (familyId) {
+        rulesQuery = rulesQuery.eq('family_id', familyId)
+      }
+
+      const { data: activeRules } = await rulesQuery
+
       // If there are active rules, use AI-powered planning with SSE
-      if (activeRules && activeRules.length > 0 && familyId) {
+      if (activeRules && activeRules.length > 0) {
         await generatePlanWithSSE()
         return
       }
@@ -592,8 +603,9 @@ export default function PlanesPage() {
         return
       }
 
-      // Use the same pattern or pick a random one
-      const pattern = availablePatterns.find(p => p.id === currentMeal.pattern_id) || availablePatterns[0]
+      // Pick a random pattern from available ones
+      const randomPatternIndex = Math.floor(Math.random() * availablePatterns.length)
+      const pattern = availablePatterns[randomPatternIndex]
 
       // Generate new ingredients for this meal (excluding current ones)
       const newIngredients: FoodIngredient[] = []
@@ -623,9 +635,11 @@ export default function PlanesPage() {
         return
       }
 
-      // Update the meal
+      // Update the meal (with potentially new pattern)
       const newMeal = {
         ...currentMeal,
+        pattern_id: pattern.id,
+        pattern_name: pattern.name,
         ingredient_ids: newIngredients.map(i => i.id),
         ingredients: newIngredients
       }
@@ -701,6 +715,109 @@ export default function PlanesPage() {
     setEditingMeal(null)
   }
 
+  // Drag & Drop handlers
+  const handleDragStart = (dayDate: string, mealType: string) => {
+    setDraggedMeal({ date: dayDate, mealType })
+  }
+
+  const handleDragOver = (e: React.DragEvent, dayDate: string, mealType: string) => {
+    e.preventDefault()
+    // Only allow drop if same meal type
+    if (draggedMeal && draggedMeal.mealType === mealType) {
+      setDragOverMeal({ date: dayDate, mealType })
+    }
+  }
+
+  const handleDragLeave = () => {
+    setDragOverMeal(null)
+  }
+
+  const handleDrop = (e: React.DragEvent, targetDate: string, targetMealType: string) => {
+    e.preventDefault()
+
+    if (!draggedMeal || !generatedPlan) {
+      setDraggedMeal(null)
+      setDragOverMeal(null)
+      return
+    }
+
+    // Only swap if same meal type
+    if (draggedMeal.mealType !== targetMealType) {
+      showToast('Solo puedes intercambiar comidas del mismo tipo', 'error')
+      setDraggedMeal(null)
+      setDragOverMeal(null)
+      return
+    }
+
+    // Don't swap with itself
+    if (draggedMeal.date === targetDate) {
+      setDraggedMeal(null)
+      setDragOverMeal(null)
+      return
+    }
+
+    // Find source and target days
+    const sourceDayIndex = generatedPlan.plan.days.findIndex(d => d.date === draggedMeal.date)
+    const targetDayIndex = generatedPlan.plan.days.findIndex(d => d.date === targetDate)
+
+    if (sourceDayIndex === -1 || targetDayIndex === -1) {
+      setDraggedMeal(null)
+      setDragOverMeal(null)
+      return
+    }
+
+    const sourceDay = generatedPlan.plan.days[sourceDayIndex]
+    const targetDay = generatedPlan.plan.days[targetDayIndex]
+
+    // Find meals
+    const sourceMealIndex = sourceDay.meals.findIndex(m => m.meal_type === draggedMeal.mealType)
+    const targetMealIndex = targetDay.meals.findIndex(m => m.meal_type === targetMealType)
+
+    if (sourceMealIndex === -1 || targetMealIndex === -1) {
+      setDraggedMeal(null)
+      setDragOverMeal(null)
+      return
+    }
+
+    const sourceMeal = sourceDay.meals[sourceMealIndex]
+    const targetMeal = targetDay.meals[targetMealIndex]
+
+    // Swap meals
+    const newDays = [...generatedPlan.plan.days]
+
+    // Update source day with target meal
+    newDays[sourceDayIndex] = {
+      ...sourceDay,
+      meals: [
+        ...sourceDay.meals.slice(0, sourceMealIndex),
+        targetMeal,
+        ...sourceDay.meals.slice(sourceMealIndex + 1)
+      ]
+    }
+
+    // Update target day with source meal
+    newDays[targetDayIndex] = {
+      ...targetDay,
+      meals: [
+        ...targetDay.meals.slice(0, targetMealIndex),
+        sourceMeal,
+        ...targetDay.meals.slice(targetMealIndex + 1)
+      ]
+    }
+
+    setGeneratedPlan({
+      ...generatedPlan,
+      plan: {
+        ...generatedPlan.plan,
+        days: newDays
+      }
+    })
+
+    showToast('Comidas intercambiadas exitosamente', 'success')
+    setDraggedMeal(null)
+    setDragOverMeal(null)
+  }
+
   if (loading) {
     return (
       <div className="px-4 sm:px-6 lg:px-8 flex items-center justify-center min-h-[50vh]">
@@ -770,11 +887,11 @@ export default function PlanesPage() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-sm">
+                    <span className="font-medium text-sm text-gray-900">
                       {pa.available ? '✅' : '❌'} {pa.pattern.name}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600">{pa.pattern.description}</p>
+                  <p className="text-xs text-gray-700">{pa.pattern.description}</p>
                   {!pa.available && pa.missingTypes.length > 0 && (
                     <p className="text-xs text-red-600 mt-1">
                       Faltan: {pa.missingTypes.join(', ')}
@@ -799,11 +916,11 @@ export default function PlanesPage() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-sm">
+                    <span className="font-medium text-sm text-gray-900">
                       {pa.available ? '✅' : '❌'} {pa.pattern.name}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600">{pa.pattern.description}</p>
+                  <p className="text-xs text-gray-700">{pa.pattern.description}</p>
                   {!pa.available && pa.missingTypes.length > 0 && (
                     <p className="text-xs text-red-600 mt-1">
                       Faltan: {pa.missingTypes.join(', ')}
@@ -828,11 +945,11 @@ export default function PlanesPage() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-sm">
+                    <span className="font-medium text-sm text-gray-900">
                       {pa.available ? '✅' : '❌'} {pa.pattern.name}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600">{pa.pattern.description}</p>
+                  <p className="text-xs text-gray-700">{pa.pattern.description}</p>
                   {!pa.available && pa.missingTypes.length > 0 && (
                     <p className="text-xs text-red-600 mt-1">
                       Faltan: {pa.missingTypes.join(', ')}
@@ -994,11 +1111,22 @@ export default function PlanesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {day.meals.map((meal) => {
                     const isEditing = editingMeal?.date === day.date && editingMeal?.mealType === meal.meal_type
+                    const isDragging = draggedMeal?.date === day.date && draggedMeal?.mealType === meal.meal_type
+                    const isDragOver = dragOverMeal?.date === day.date && dragOverMeal?.mealType === meal.meal_type
 
                     return (
                       <div
                         key={meal.meal_type}
-                        className={`rounded-md p-3 ${
+                        draggable={true}
+                        onDragStart={() => handleDragStart(day.date, meal.meal_type)}
+                        onDragOver={(e) => handleDragOver(e, day.date, meal.meal_type)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, day.date, meal.meal_type)}
+                        className={`rounded-md p-3 transition-all cursor-move ${
+                          isDragging ? 'opacity-50 scale-95' :
+                          isDragOver ? 'ring-4 ring-indigo-400 scale-105' :
+                          ''
+                        } ${
                           meal.meal_type === 'Desayuno' ? 'bg-yellow-50' :
                           meal.meal_type === 'Almuerzo' ? 'bg-green-50' :
                           'bg-blue-50'

@@ -275,7 +275,7 @@ export default function IngredientesPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Ingredientes
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-700">
             Gestiona tu biblioteca de ingredientes individuales
           </p>
           {/* Family indicator */}
@@ -362,7 +362,7 @@ export default function IngredientesPage() {
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             No se encontraron ingredientes
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-700 mb-4">
             {searchTerm || selectedTypes.length > 0
               ? 'Intenta ajustar los filtros'
               : 'Agrega tu primer ingrediente para comenzar'
@@ -384,7 +384,7 @@ export default function IngredientesPage() {
             <div key={type} className="bg-white rounded-lg shadow-md">
               <div className="bg-gray-50 px-6 py-3 border-b">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {type} <span className="text-sm text-gray-500 font-normal">({items.length})</span>
+                  {type} <span className="text-sm text-gray-600 font-normal">({items.length})</span>
                 </h2>
               </div>
               <div className="p-6">
@@ -398,7 +398,7 @@ export default function IngredientesPage() {
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">{ingredient.name}</div>
                           {ingredient.description && (
-                            <div className="text-xs text-gray-500 mt-1">{ingredient.description}</div>
+                            <div className="text-xs text-gray-600 mt-1">{ingredient.description}</div>
                           )}
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

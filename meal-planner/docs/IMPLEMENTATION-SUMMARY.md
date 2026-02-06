@@ -2,15 +2,15 @@
 
 ## Estado del Proyecto
 
-**Fecha**: 2026-01-30 (última actualización)
-**Fase Actual**: Sistema completo con autenticación real, sistema de familia, testing framework, y UX mejorado ✅
-**Cambios recientes (Sistema de Familia - 2026-01-19)**:
-- ✅ Sistema de Familia implementado (reemplaza plan_collaborators)
-- ✅ Bug RLS infinite recursion **RESUELTO**
-- ✅ Nuevas tablas: `families`, `family_members`, `user_profiles`
-- ✅ Funciones RPC sin recursión
-- ✅ OAuth callback mejorado (server route)
-- ✅ Testing de familia desbloqueado
+**Fecha**: 2026-02-06 (última actualización)
+**Fase Actual**: Sistema completo con autenticación real, sistema de familia, testing framework, UX mobile mejorado, y bug LLM resuelto ✅
+**Cambios recientes (UX Mobile + Fix LLM - 2026-02-06)**:
+- ✅ Mejoras UX Mobile: Tipografía, menú hamburguesa, drag & drop
+- ✅ Bug crítico LLM sin familia **RESUELTO**
+- ✅ Nuevo componente: `MobileSidebar.tsx`
+- ✅ Drag & drop nativo HTML5 para intercambio de comidas
+- ✅ Regeneración con patrón random
+- ✅ Sistema funciona con o sin familia
 
 ---
 
@@ -523,6 +523,10 @@ Ver: [obsolete/](./obsolete/)
 
 ### Componentes
 - [src/components/Header.tsx](../src/components/Header.tsx) - Header con nombre de usuario ✅ ACTUALIZADO
+- [src/components/MobileSidebar.tsx](../src/components/MobileSidebar.tsx) - Menú hamburguesa lateral para mobile ✅ NUEVO (2026-02-06)
+  - Overlay con animación slide-in desde la izquierda
+  - Solo visible en mobile (md:hidden)
+  - Incluye todos los enlaces, info de usuario y botón de cierre de sesión
 - [src/components/Toast.tsx](../src/components/Toast.tsx) - Notificaciones
 - [src/components/ConfirmDialog.tsx](../src/components/ConfirmDialog.tsx) - Diálogos de confirmación
 - [src/components/FamilyManager.tsx](../src/components/FamilyManager.tsx) - Gestión de familia ✅ NUEVO
@@ -540,6 +544,13 @@ Ver: [obsolete/](./obsolete/)
 - [src/app/planes/page.tsx](../src/app/planes/page.tsx) - Planificación semanal ✅
   - **Gestión de colaboradores integrada** ✅ NUEVO
   - **Autenticación real integrada** ✅ NUEVO
+  - **Drag & Drop para intercambiar comidas** ✅ NUEVO (2026-02-06)
+    - Arrastra y suelta comidas del mismo tipo entre días
+    - Efectos visuales: opacity, ring-indigo-400, scale transitions
+    - Validación automática de tipo de comida (desayunos↔desayunos, etc.)
+  - **Regeneración con patrón random** ✅ NUEVO (2026-02-06)
+    - Selecciona patrón aleatorio de los disponibles (no solo el actual)
+    - Mayor variedad en regeneraciones sucesivas
 - ~~[src/app/combinaciones/page.tsx]~~ - ELIMINADO ❌
 - [src/app/platos/page.tsx](../src/app/platos/page.tsx) - Existe pero NO se usa
 
@@ -863,6 +874,42 @@ Ver [BACKLOG.md](./BACKLOG.md) para lista completa y actualizada.
 - [src/lib/prompts/validate-plan.md](../src/lib/prompts/validate-plan.md) - Detección de violaciones
 - [src/lib/prompts/suggest-modifications.md](../src/lib/prompts/suggest-modifications.md) - Sugerencias de corrección
 - [src/lib/prompts/README.md](../src/lib/prompts/README.md) - Documentación completa
+
+### 4. Mejoras UX Mobile + Bug Crítico LLM Resuelto (2026-02-06)
+
+**🐛 Bug Crítico Resuelto:**
+- **Problema**: Sistema NO usaba LLM si usuario no tenía familia
+  - Backend API rechazaba requests sin `familyId` (400 Bad Request)
+  - Frontend requería `familyId` para detectar reglas activas
+  - Impacto: Motor AI nunca se ejecutaba para usuarios sin familia
+- **Solución implementada**:
+  - ✅ Frontend ([src/app/planes/page.tsx](../src/app/planes/page.tsx)): Query de reglas condicional
+  - ✅ Backend ([src/app/api/planning/generate/route.ts](../src/app/api/planning/generate/route.ts)): `familyId` opcional, query condicional
+  - ✅ Agent ([src/lib/agents/planning-agent.ts](../src/lib/agents/planning-agent.ts)): Parámetro `familyId: string | null`
+- **Resultado**: Sistema usa LLM correctamente con o sin familia
+
+**🎨 Mejoras UX Mobile:**
+1. **Tipografía mejorada**:
+   - Cambiado `text-gray-500/600` → `text-gray-700/900`
+   - Mejor contraste en todas las pantallas móviles
+   - Archivos: [src/app/page.tsx](../src/app/page.tsx), [src/app/ingredientes/page.tsx](../src/app/ingredientes/page.tsx), [src/app/planes/page.tsx](../src/app/planes/page.tsx), [src/components/Header.tsx](../src/components/Header.tsx)
+
+2. **Menú hamburguesa lateral**:
+   - Nuevo componente: [src/components/MobileSidebar.tsx](../src/components/MobileSidebar.tsx)
+   - Overlay + animación slide-in desde izquierda
+   - Solo visible en mobile (`md:hidden`)
+   - Incluye todos los enlaces, info de usuario y cierre de sesión
+
+3. **Drag & Drop nativo HTML5**:
+   - Intercambio de comidas del mismo tipo entre días
+   - Efectos visuales: `opacity-50`, `ring-4 ring-indigo-400`, `scale-95/105`
+   - Validación automática de tipo de comida
+   - Implementado en [src/app/planes/page.tsx](../src/app/planes/page.tsx)
+
+4. **Regeneración con patrón random**:
+   - Ahora selecciona patrón aleatorio (no solo el actual)
+   - Mayor variedad en regeneraciones sucesivas
+   - Actualiza `pattern_id` y `pattern_name` automáticamente
 
 **Verificado contra código real**: Sí ✅
 - Motor de planificación: [src/lib/weekly-planner.ts](../src/lib/weekly-planner.ts)

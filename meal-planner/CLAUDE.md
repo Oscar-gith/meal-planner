@@ -244,10 +244,10 @@ const page1 = await context1.newPage()
 
 1. **Motor de Reglas:** Rule engine exists but rules are not fully applied by the algorithm. Needs validation improvement.
 
-2. **Mobile UX Issues:**
-   - Typography colors too light on mobile
-   - Horizontal menu hidden in vertical orientation
-   - Excessive scrolling required
+2. ~~**Mobile UX Issues:**~~ ✅ **RESOLVED (2026-02-06)**
+   - ~~Typography colors too light on mobile~~ → Fixed with text-gray-700/900
+   - ~~Horizontal menu hidden in vertical orientation~~ → Implemented hamburger menu (MobileSidebar.tsx)
+   - ~~Excessive scrolling required~~ → Improved with better navigation
 
 3. **Security - Plan Visibility:** Non-family members can see saved plans from other families. RLS policies on `weekly_plans` need review.
 

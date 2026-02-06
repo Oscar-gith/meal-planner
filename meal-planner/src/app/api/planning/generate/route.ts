@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now()
   let parsedBody: {
     config: PlanningConfig
-    familyId: string
+    familyId: string | null
     stream?: boolean
     existingPlan?: unknown
   } | null = null
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     parsedBody = body as {
       config: PlanningConfig
-      familyId: string
+      familyId: string | null
       stream?: boolean
       existingPlan?: unknown // For retry functionality
     }
@@ -68,14 +68,6 @@ export async function POST(request: NextRequest) {
     console.log('[API] Request body parsed:', { familyId, hasConfig: !!config })
 
     // Validate required fields
-    if (!familyId) {
-      console.error('[API] Missing familyId')
-      return NextResponse.json(
-        { error: 'familyId is required. Please join or create a family first.' },
-        { status: 400 }
-      )
-    }
-
     if (!config) {
       console.error('[API] Missing config')
       return NextResponse.json(
@@ -84,25 +76,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[API] Fetching rules for family:', familyId)
+    console.log('[API] Fetching rules for user/family:', { userId: user.id, familyId })
 
-    // Fetch active LLM rules for this family
-    const { data: rules, error: rulesError } = await supabase
+    // Fetch active LLM rules
+    // If user has a family, fetch family rules; otherwise fetch all active rules
+    let rulesQuery = supabase
       .from('rules')
       .select('*')
-      .eq('family_id', familyId)
       .eq('is_active', true)
       .eq('validation_method', 'llm')
+
+    if (familyId) {
+      rulesQuery = rulesQuery.eq('family_id', familyId)
+    }
+
+    const { data: rules, error: rulesError } = await rulesQuery
 
     if (rulesError) {
       console.error('Error fetching rules:', rulesError)
     }
 
     // Fetch ingredients
-    const { data: ingredients, error: ingredientsError } = await supabase
-      .from('food_ingredients')
-      .select('*')
-      .eq('family_id', familyId)
+    // If user has a family, fetch family ingredients; otherwise fetch user's ingredients
+    let ingredientsQuery = supabase.from('food_ingredients').select('*')
+
+    if (familyId) {
+      ingredientsQuery = ingredientsQuery.eq('family_id', familyId)
+    }
+
+    const { data: ingredients, error: ingredientsError } = await ingredientsQuery
 
     if (ingredientsError || !ingredients) {
       return NextResponse.json(
@@ -293,7 +295,7 @@ function streamPlanningProgress(
   patterns: MealPattern[],
   rules: Rule[],
   userId: string,
-  familyId: string,
+  familyId: string | null,
   existingPlan: unknown,
   supabase: Awaited<ReturnType<typeof createClient>>,
   startTime: number
